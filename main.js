@@ -32,7 +32,7 @@ let gameSpeed = 120;
 normalBtn.style.color = "green"
 
 let snakeSprite = new Image();
-snakeSprite.src = "./images/snake-sprite_3.png";
+snakeSprite.src = "./images/snake-sprite.png";
 let appleSprite = new Image();
 appleSprite.src = "./images/apple-sprite.png";
 
