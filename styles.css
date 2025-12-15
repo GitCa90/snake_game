@@ -87,6 +87,7 @@
 
 #bottom-section {
   display: flex;
+  flex-direction: row;
   border: solid 10px var(--borderColor);
   background-color: aliceblue;
   text-align: center;

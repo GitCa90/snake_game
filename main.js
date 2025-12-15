@@ -6,6 +6,7 @@ const gameOverBackground = document.querySelector(".game-over-background");
 const pressAnyKeyMessage = document.getElementById("press-any-key");
 const highscoreList = document.getElementById("highscore-container");
 
+//Fix this
 const normalBtn = document.getElementById("normal-btn");
 const hardBtn = document.getElementById("hard-btn");
 const expertBtn = document.getElementById("expert-btn");
@@ -29,7 +30,7 @@ let canTurn = true;
 let randomTimer = 5 + Math.random() * 10;
 let gameDifficulty = "Normal";
 let gameSpeed = 120;
-normalBtn.style.color = "green"
+normalBtn.style.color = "green";
 
 let snakeSprite = new Image();
 snakeSprite.src = "./images/snake-sprite.png";
@@ -87,14 +88,15 @@ function gameSpeedControl(e) {
   const val = e.currentTarget.textContent;
   gameDifficulty = val;
 
-  const resetColors = () => allDifficultyBtn.forEach(btn => btn.style.color = "")
+  const resetColors = () =>
+    allDifficultyBtn.forEach((btn) => (btn.style.color = ""));
 
   if (!isRunning) {
     switch (val) {
       case "Normal":
         gameSpeed = 120;
-        resetColors()
-        normalBtn.style.color = "green"
+        resetColors();
+        normalBtn.style.color = "green";
         break;
       case "Hard":
         gameSpeed = 100;
@@ -103,18 +105,18 @@ function gameSpeedControl(e) {
         break;
       case "Expert":
         gameSpeed = 80;
-         resetColors();
-         expertBtn.style.color = "green";
+        resetColors();
+        expertBtn.style.color = "green";
         break;
       case "Master":
         gameSpeed = 60;
-         resetColors();
-         masterBtn.style.color = "green";
+        resetColors();
+        masterBtn.style.color = "green";
         break;
       case "Inferno":
         gameSpeed = 40;
-         resetColors();
-         infernoBtn.style.color = "green";
+        resetColors();
+        infernoBtn.style.color = "green";
         break;
     }
   }
@@ -132,13 +134,12 @@ function gameStart() {
     scoreText.textContent = `${score.toString().padStart(4, "0")}`;
 
     clearBoard();
-    
+
     gameDifficultyBtn();
     if (isRunning) {
       moveSnake();
       growSnake();
       isFilled();
-      
     } else {
       clearInterval(loop);
     }
@@ -146,8 +147,6 @@ function gameStart() {
     drawFood();
   }, gameSpeed);
 }
-
-
 
 function clearBoard() {
   //Resetting Board
@@ -447,17 +446,23 @@ function setHighscore() {
 
     localStorage.setItem("Snake-Highscore", JSON.stringify(highscore));
 
-    for (let i = 0; i < highscore.length; i++) {
+    for (let i = 0; i < 5; i++) {
       const div = document.createElement("div");
       div.classList.add("score-row");
 
       const dateSpan = document.createElement("span");
       dateSpan.classList.add("date-col");
-      dateSpan.textContent = highscore[i].date;
 
       const scoreSpan = document.createElement("span");
       scoreSpan.classList.add("score-col");
-      scoreSpan.textContent = `${highscore[i].score} (${highscore[i].difficulty})`;
+
+      if (highscore[i]) {
+        dateSpan.textContent = highscore[i].date;
+        scoreSpan.textContent = `${highscore[i].score} (${highscore[i].difficulty})`;
+      } else {
+        dateSpan.textContent = "---"
+        scoreSpan.textContent = "---"
+      }
 
       div.appendChild(dateSpan);
       div.appendChild(scoreSpan);
