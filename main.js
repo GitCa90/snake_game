@@ -73,7 +73,7 @@ const snakePart = {
 };
 
 function gameStart() {
-  setHighscore();
+  setHighscore()
   resetGameOverlay();
   isRunning = true;
 
@@ -347,9 +347,7 @@ function gameOver() {
       snakeHead.y > canvasHeight - unitSize
     ) {
       isRunning = false;
-
-      setHighscore();
-
+    
       gameOverBackground.classList.add("show");
       gameOverText.classList.add("show");
 
@@ -362,6 +360,7 @@ function gameOver() {
       }, 2000);
     }
   }
+  setHighscore();
 }
 
 function resetAndRemoveListener() {
