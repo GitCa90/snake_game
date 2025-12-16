@@ -5,13 +5,11 @@ const gameOverText = document.querySelector("#game-over-text");
 const gameOverBackground = document.querySelector(".game-over-background");
 const pressAnyKeyMessage = document.getElementById("press-any-key");
 const highscoreList = document.getElementById("highscore-container");
-
-//Fix this...
+const allDifficultyBtn = document.querySelectorAll(".difficulty-btn");
 const normalBtn = document.getElementById("normal-btn");
-const hardBtn = document.getElementById("hard-btn");
-const expertBtn = document.getElementById("expert-btn");
-const masterBtn = document.getElementById("master-btn");
-const infernoBtn = document.getElementById("inferno-btn");
+
+//initial
+normalBtn.style.color = "green";
 
 const canvasWidth = canvas.width;
 const canvasHeight = canvas.height;
@@ -30,7 +28,6 @@ let canTurn = true;
 let randomTimer = 5 + Math.random() * 10;
 let gameDifficulty = "Normal";
 let gameSpeed = 120;
-normalBtn.style.color = "green";
 
 let snakeSprite = new Image();
 snakeSprite.src = "./images/snake-sprite.png";
@@ -75,91 +72,43 @@ const snakePart = {
   corner_right_down_fill: { x: 175, y: 50, width: 25, height: 25 },
 };
 
-function gameDifficultyBtn() {
-  isRunning ? (normalBtn.disabled = true) : (normalBtn.disabled = false);
-  isRunning ? (hardBtn.disabled = true) : (hardBtn.disabled = false);
-  isRunning ? (expertBtn.disabled = true) : (expertBtn.disabled = false);
-  isRunning ? (masterBtn.disabled = true) : (masterBtn.disabled = false);
-  isRunning ? (infernoBtn.disabled = true) : (infernoBtn.disabled = false);
-}
-
-function gameSpeedControl(e) {
-  const allDifficultyBtn = document.querySelectorAll(".difficulty-btn");
-  const val = e.currentTarget.textContent;
-  gameDifficulty = val;
-
-  const resetColors = () =>
-    allDifficultyBtn.forEach((btn) => (btn.style.color = ""));
-
-  if (!isRunning) {
-    switch (val) {
-      case "Normal":
-        gameSpeed = 120;
-        resetColors();
-        normalBtn.style.color = "green";
-        break;
-      case "Hard":
-        gameSpeed = 100;
-        resetColors();
-        hardBtn.style.color = "green";
-        break;
-      case "Expert":
-        gameSpeed = 80;
-        resetColors();
-        expertBtn.style.color = "green";
-        break;
-      case "Master":
-        gameSpeed = 60;
-        resetColors();
-        masterBtn.style.color = "green";
-        break;
-      case "Inferno":
-        gameSpeed = 40;
-        resetColors();
-        infernoBtn.style.color = "green";
-        break;
-    }
-  }
-}
-
 function gameStart() {
   setHighscore();
   resetGameOverlay();
   isRunning = true;
 
-  const loop = setInterval(() => {
-    gameOver();
+  gameLoop();
+}
+function gameLoop() {
+  ctx.filter = isRunning ? "none" : "grayscale(100%)";
+  scoreText.textContent = `${score.toString().padStart(4, "0")}`;
 
-    ctx.filter = isRunning ? "none" : "grayscale(100%)";
-    scoreText.textContent = `${score.toString().padStart(4, "0")}`;
+  disableDifficultyButton();
 
+  if (isRunning) {
     clearBoard();
-
-    gameDifficultyBtn();
-    if (isRunning) {
-      moveSnake();
-      growSnake();
-      isFilled();
-    } else {
-      clearInterval(loop);
-    }
+    moveSnake();
+    growSnake();
+    isFilled();
     drawSnake();
     drawFood();
-  }, gameSpeed);
+    gameOver();
+
+    setTimeout(gameLoop, gameSpeed);
+  } else {
+    drawSnake();
+    drawFood();
+  }
+}
+
+function disableDifficultyButton() {
+  allDifficultyBtn.forEach((btn) => (btn.disabled = isRunning));
 }
 
 function clearBoard() {
   //Resetting Board
   ctx.fillStyle = canvasColor;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-}
-
-function isFilled() {
-  if (applePosition.length === 0) return;
-  const apple = applePosition[0];
-  const snakeArea = snake.some((seg) => apple.x === seg.x && apple.y === seg.y);
-
-  if (!snakeArea) applePosition.shift();
 }
 
 function getHeadSprite(vX, vY) {
@@ -240,6 +189,53 @@ function getBodySprite(seg, i) {
       : snakePart.corner_right_down;
 }
 
+function moveSnake() {
+  lastTailPosition = {
+    x: snake[snake.length - 1].x,
+    y: snake[snake.length - 1].y,
+  };
+
+  for (let i = snake.length - 1; i > 0; i--) {
+    snake[i].x = snake[i - 1].x;
+    snake[i].y = snake[i - 1].y;
+  }
+  if (velocityX === 1) snake[0].x += unitSize;
+  if (velocityX === -1) snake[0].x -= unitSize;
+  if (velocityY === 1) snake[0].y += unitSize;
+  if (velocityY === -1) snake[0].y -= unitSize;
+
+  canTurn = true;
+}
+
+function growSnake() {
+  if (snake[0].x === apple.x && snake[0].y === apple.y) {
+    applePosition.push({ x: apple.x, y: apple.y });
+    snake.push({ x: lastTailPosition.x, y: lastTailPosition.y });
+
+    makeFood();
+
+    if (gameSpeed == 120) {
+      score += 1;
+    } else if (gameSpeed == 100) {
+      score += 2;
+    } else if (gameSpeed == 80) {
+      score += 3;
+    } else if (gameSpeed == 60) {
+      score += 4;
+    } else if (gameSpeed == 40) {
+      score += 5;
+    }
+  }
+}
+
+function isFilled() {
+  if (applePosition.length === 0) return;
+  const apple = applePosition[0];
+  const snakeArea = snake.some((seg) => apple.x === seg.x && apple.y === seg.y);
+
+  if (!snakeArea) applePosition.shift();
+}
+
 function drawSnake() {
   snake.forEach((segment, index) => {
     let sprite;
@@ -260,47 +256,6 @@ function drawSnake() {
       unitSize
     );
   });
-}
-
-function growSnake() {
-  //Reset food if spawn on snake
-  if (snake[0].x === apple.x && snake[0].y === apple.y) {
-    applePosition.push({ x: apple.x, y: apple.y });
-    snake.push({ x: lastTailPosition.x, y: lastTailPosition.y });
-
-    makeFood();
-
-    //Score
-    if (gameSpeed == 120) {
-      score += 1;
-    } else if (gameSpeed == 100) {
-      score += 2;
-    } else if (gameSpeed == 80) {
-      score += 3;
-    } else if (gameSpeed == 60) {
-      score += 4;
-    } else if (gameSpeed == 40) {
-      score += 5;
-    }
-  }
-}
-
-function moveSnake() {
-  lastTailPosition = {
-    x: snake[snake.length - 1].x,
-    y: snake[snake.length - 1].y,
-  };
-
-  for (let i = snake.length - 1; i > 0; i--) {
-    snake[i].x = snake[i - 1].x;
-    snake[i].y = snake[i - 1].y;
-  }
-  if (velocityX === 1) snake[0].x += unitSize;
-  if (velocityX === -1) snake[0].x -= unitSize;
-  if (velocityY === 1) snake[0].y += unitSize;
-  if (velocityY === -1) snake[0].y -= unitSize;
-
-  canTurn = true;
 }
 
 function makeFood() {
@@ -350,8 +305,39 @@ function snakeDirection(event) {
   canTurn = false;
 }
 
+function gameSpeedControl(btn) {
+  allDifficultyBtn.forEach((btn) => (btn.style.color = ""));
+
+  if (!isRunning) {
+    switch (btn.dataset.difficulty) {
+      case "Normal":
+        gameSpeed = 120;
+        gameDifficulty = "Normal";
+        break;
+      case "Hard":
+        gameSpeed = 100;
+        gameDifficulty = "Hard";
+        break;
+      case "Expert":
+        gameSpeed = 80;
+        gameDifficulty = "Expert";
+        break;
+      case "Master":
+        gameSpeed = 60;
+        gameDifficulty = "Master";
+        break;
+      case "Inferno":
+        gameSpeed = 40;
+        gameDifficulty = "Inferno";
+        break;
+    }
+    btn.style.color = "green";
+  }
+}
+
 function gameOver() {
   let snakeHead = snake[0];
+
   for (let i = 3; i < snake.length; i++) {
     if (
       (snakeHead.x === snake[i].x && snakeHead.y === snake[i].y) ||
@@ -361,6 +347,8 @@ function gameOver() {
       snakeHead.y > canvasHeight - unitSize
     ) {
       isRunning = false;
+
+      setHighscore();
 
       gameOverBackground.classList.add("show");
       gameOverText.classList.add("show");
@@ -398,12 +386,10 @@ function resetGameOverlay() {
 
 function resetGame() {
   if (!isRunning) {
-    gameStart();
     velocityX = 1;
     velocityY = 0;
     prevX = 0;
     prevY = 0;
-    isRunning = true;
     score = 0;
     applePosition = [];
     snake = [
@@ -413,9 +399,10 @@ function resetGame() {
       { x: 0 * unitSize, y: 0 },
     ];
   }
+  gameStart();
 }
 
-function getCurrentDate() {
+function getCurrentTime() {
   let now = new Date();
 
   let day = String(now.getDate()).padStart(2, "0");
@@ -431,16 +418,18 @@ function setHighscore() {
   const scoreRow = document.querySelectorAll(".score-row");
 
   if (!isRunning) {
-    getCurrentDate();
+    getCurrentTime();
     scoreRow.forEach((item) => item.remove());
     let highscore = JSON.parse(localStorage.getItem("Snake-Highscore") || "[]");
 
-    if (score > 0)
+    if (score > 0) {
       highscore.push({
         score: score,
-        date: getCurrentDate(),
+        date: getCurrentTime(),
         difficulty: gameDifficulty,
       });
+    }
+
     highscore.sort((a, b) => b.score - a.score);
     highscore = highscore.slice(0, 5);
 
@@ -460,8 +449,8 @@ function setHighscore() {
         dateSpan.textContent = highscore[i].date;
         scoreSpan.textContent = `${highscore[i].score} (${highscore[i].difficulty})`;
       } else {
-        dateSpan.textContent = "---"
-        scoreSpan.textContent = "---"
+        dateSpan.textContent = "---";
+        scoreSpan.textContent = "---";
       }
 
       div.appendChild(dateSpan);
@@ -476,7 +465,9 @@ gameStart();
 makeFood();
 
 document.addEventListener("keydown", snakeDirection);
-document
-  .querySelectorAll(".difficulty-btn")
-  .forEach((btn) => btn.addEventListener("click", gameSpeedControl));
+document.getElementById("difficulty-section").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
 
+  gameSpeedControl(btn);
+});
