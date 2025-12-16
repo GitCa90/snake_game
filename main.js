@@ -1,91 +1,108 @@
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-let scoreText = document.getElementById("score");
-const gameOverText = document.querySelector("#game-over-text");
-const gameOverBackground = document.querySelector(".game-over-background");
-const pressAnyKeyMessage = document.getElementById("press-any-key");
-const highscoreList = document.getElementById("highscore-container");
-const allDifficultyBtn = document.querySelectorAll(".difficulty-btn");
-const normalBtn = document.getElementById("normal-btn");
-
-//initial
-normalBtn.style.color = "green";
-
-const canvasWidth = canvas.width;
-const canvasHeight = canvas.height;
-const canvasColor = "aliceblue";
 const unitSize = 25;
-let isRunning = false;
 
-let velocityX = 1;
-let velocityY = 0;
-let prevX = 0;
-let prevY = 0;
-let score = 0;
+const game = {
+  state: {
+    isRunning: false,
+    canTurn: true,
+    velocityX: 1,
+    velocityY: 0,
+    score: 0,
+    difficulty: "normal",
+    lastTailPosition: null,
+    applePosition: [],
+  },
 
-let lastTailPosition = null;
-let canTurn = true;
-let randomTimer = 5 + Math.random() * 10;
-let gameDifficulty = "Normal";
-let gameSpeed = 120;
+  ui: {
+    ctx: null,
+    canvas: document.getElementById("canvas"),
+    scoreText: document.getElementById("score"),
+    gameOverText: document.querySelector("#game-over-text"),
+    gameOverBackground: document.querySelector(".game-over-background"),
+    pressAnyKeyMessage: document.getElementById("press-any-key"),
+    highscoreList: document.getElementById("highscore-container"),
+    normalBtn: document.getElementById("normal-btn"),
+    allDifficultyBtn: document.querySelectorAll(".difficulty-btn"),
+  },
 
-let snakeSprite = new Image();
-snakeSprite.src = "./images/snake-sprite.png";
-let appleSprite = new Image();
-appleSprite.src = "./images/apple-sprite.png";
+  config: {
+    gameSpeed: 120,
+    canvasColor: "aliceblue",
+  },
 
-let applePosition = [];
-let goldenCarrot = { x: 0, y: 0 };
-let apple = { x: 0, y: 0 };
-let snake = [
-  { x: 3 * unitSize, y: 0 },
-  { x: 2 * unitSize, y: 0 },
-  { x: 1 * unitSize, y: 0 },
-  { x: 0 * unitSize, y: 0 },
-];
-const snakePart = {
-  head_left: { x: 0, y: 0, width: 25, height: 25 },
-  head_top: { x: 25, y: 0, width: 25, height: 25 },
-  head_right: { x: 50, y: 0, width: 25, height: 25 },
-  head_down: { x: 75, y: 0, width: 25, height: 25 },
-  body_horizontal: { x: 100, y: 0, width: 25, height: 25 },
-  body_horizontal_fill: { x: 125, y: 0, width: 25, height: 25 },
-  body_vertical: { x: 150, y: 0, width: 25, height: 25 },
-  body_vertical_fill: { x: 175, y: 0, width: 25, height: 25 },
+  entities: {
+    apple: { x: 0, y: 0 },
+    snake: [
+      { x: 3 * unitSize, y: 0 },
+      { x: 2 * unitSize, y: 0 },
+      { x: 1 * unitSize, y: 0 },
+      { x: 0 * unitSize, y: 0 },
+    ],
+    snakePart: {
+      head_left: { x: 0, y: 0, width: 25, height: 25 },
+      head_top: { x: 25, y: 0, width: 25, height: 25 },
+      head_right: { x: 50, y: 0, width: 25, height: 25 },
+      head_down: { x: 75, y: 0, width: 25, height: 25 },
+      body_horizontal: { x: 100, y: 0, width: 25, height: 25 },
+      body_horizontal_fill: { x: 125, y: 0, width: 25, height: 25 },
+      body_vertical: { x: 150, y: 0, width: 25, height: 25 },
+      body_vertical_fill: { x: 175, y: 0, width: 25, height: 25 },
 
-  tail_top: { x: 0, y: 25, width: 25, height: 25 },
-  tail_top_fill: { x: 25, y: 25, width: 25, height: 25 },
-  tail_right: { x: 50, y: 25, width: 25, height: 25 },
-  tail_right_fill: { x: 75, y: 25, width: 25, height: 25 },
-  tail_down: { x: 100, y: 25, width: 25, height: 25 },
-  tail_down_fill: { x: 125, y: 25, width: 25, height: 25 },
-  tail_left: { x: 150, y: 25, width: 25, height: 25 },
-  tail_left_fill: { x: 175, y: 25, width: 25, height: 25 },
+      tail_top: { x: 0, y: 25, width: 25, height: 25 },
+      tail_top_fill: { x: 25, y: 25, width: 25, height: 25 },
+      tail_right: { x: 50, y: 25, width: 25, height: 25 },
+      tail_right_fill: { x: 75, y: 25, width: 25, height: 25 },
+      tail_down: { x: 100, y: 25, width: 25, height: 25 },
+      tail_down_fill: { x: 125, y: 25, width: 25, height: 25 },
+      tail_left: { x: 150, y: 25, width: 25, height: 25 },
+      tail_left_fill: { x: 175, y: 25, width: 25, height: 25 },
 
-  corner_left_down: { x: 0, y: 50, width: 25, height: 25 },
-  corner_left_down_fill: { x: 25, y: 50, width: 25, height: 25 },
-  corner_left_top: { x: 50, y: 50, width: 25, height: 25 },
-  corner_left_top_fill: { x: 75, y: 50, width: 25, height: 25 },
-  corner_right_top: { x: 100, y: 50, width: 25, height: 25 },
-  corner_right_top_fill: { x: 125, y: 50, width: 25, height: 25 },
-  corner_right_down: { x: 150, y: 50, width: 25, height: 25 },
-  corner_right_down_fill: { x: 175, y: 50, width: 25, height: 25 },
+      corner_left_down: { x: 0, y: 50, width: 25, height: 25 },
+      corner_left_down_fill: { x: 25, y: 50, width: 25, height: 25 },
+      corner_left_top: { x: 50, y: 50, width: 25, height: 25 },
+      corner_left_top_fill: { x: 75, y: 50, width: 25, height: 25 },
+      corner_right_top: { x: 100, y: 50, width: 25, height: 25 },
+      corner_right_top_fill: { x: 125, y: 50, width: 25, height: 25 },
+      corner_right_down: { x: 150, y: 50, width: 25, height: 25 },
+      corner_right_down_fill: { x: 175, y: 50, width: 25, height: 25 },
+    },
+  },
+
+  assets: {
+    snakeSprite: (() => {
+      const img = new Image();
+      img.src = "./images/snake-sprite.png";
+      return img;
+    })(),
+    appleSprite: (() => {
+      const img = new Image();
+      img.src = "./images/apple-sprite.png";
+      return img;
+    })(),
+  },
 };
 
+//init
+game.ui.ctx = game.ui.canvas.getContext("2d");
+game.ui.normalBtn.style.color = "green";
+const canvasWidth = game.ui.canvas.width;
+const canvasHeight = game.ui.canvas.height;
+
+//let randomTimer = 5 + Math.random() * 10; //FOR CARROT
+
 function gameStart() {
-  setHighscore()
+  setHighscore();
   resetGameOverlay();
-  isRunning = true;
+  game.state.isRunning = true;
 
   gameLoop();
 }
 function gameLoop() {
-  ctx.filter = isRunning ? "none" : "grayscale(100%)";
-  scoreText.textContent = `${score.toString().padStart(4, "0")}`;
+  game.ui.ctx.filter = game.state.isRunning ? "none" : "grayscale(100%)";
+  game.ui.scoreText.textContent = `${game.state.score.toString().padStart(4, "0")}`;
 
   disableDifficultyButton();
 
-  if (isRunning) {
+  if (game.state.isRunning) {
     clearBoard();
     moveSnake();
     growSnake();
@@ -94,7 +111,7 @@ function gameLoop() {
     drawFood();
     gameOver();
 
-    setTimeout(gameLoop, gameSpeed);
+    setTimeout(gameLoop, game.config.gameSpeed);
   } else {
     drawSnake();
     drawFood();
@@ -102,95 +119,72 @@ function gameLoop() {
 }
 
 function disableDifficultyButton() {
-  allDifficultyBtn.forEach((btn) => (btn.disabled = isRunning));
+  game.ui.allDifficultyBtn.forEach((btn) => (btn.disabled = game.state.isRunning));
 }
 
 function clearBoard() {
-  //Resetting Board
-  ctx.fillStyle = canvasColor;
-  ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+  game.ui.ctx.fillStyle = game.config.canvasColor;
+  game.ui.ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 }
 
 function getHeadSprite(vX, vY) {
-  if (vX === 1) return snakePart.head_right;
-  if (vX === -1) return snakePart.head_left;
-  if (vY === 1) return snakePart.head_down;
-  if (vY === -1) return snakePart.head_top;
-  return snakePart.head_right;
+  const snake = game.entities.snakePart;
+
+  if (vX === 1) return snake.head_right;
+  if (vX === -1) return snake.head_left;
+  if (vY === 1) return snake.head_down;
+  if (vY === -1) return snake.head_top;
+  return snake.head_right;
 }
 
 function getTailSprite(seg, i) {
-  let prev = snake[i - 1];
-  const isFilled = applePosition.some(
-    (apple) => apple.x === seg.x && apple.y === seg.y
-  );
+  const snake = game.entities.snakePart;
+  const applePos = game.state.applePosition
+  const isFilled = applePos.some((apple) => apple.x === seg.x && apple.y === seg.y);
+  let prev = game.entities.snake[i - 1];
 
-  if (prev.x < seg.x)
-    return isFilled ? snakePart.tail_right_fill : snakePart.tail_right;
-  if (prev.x > seg.x)
-    return isFilled ? snakePart.tail_left_fill : snakePart.tail_left;
-  if (prev.y < seg.y)
-    return isFilled ? snakePart.tail_down_fill : snakePart.tail_down;
-  if (prev.y > seg.y)
-    return isFilled ? snakePart.tail_top_fill : snakePart.tail_top;
+  if (prev.x < seg.x) return isFilled ? snake.tail_right_fill : snake.tail_right;
+  if (prev.x > seg.x) return isFilled ? snake.tail_left_fill : snake.tail_left;
+  if (prev.y < seg.y) return isFilled ? snake.tail_down_fill : snake.tail_down;
+  if (prev.y > seg.y) return isFilled ? snake.tail_top_fill : snake.tail_top;
 }
 
 function getBodySprite(seg, i) {
-  let prev = snake[i - 1];
-  let next = snake[i + 1];
+  const snake = game.entities.snakePart;
+  const applePos = game.state.applePosition;
+  let prev = game.entities.snake[i - 1];
+  let next = game.entities.snake[i + 1];
   const xPrev = seg.x - prev.x;
   const yPrev = seg.y - prev.y;
   const xNext = next.x - seg.x;
   const yNext = next.y - seg.y;
-  const isFilled = applePosition.some(
-    (apple) => apple.x === seg.x && apple.y === seg.y
-  );
+  const isFilled = applePos.some((apple) => apple.x === seg.x && apple.y === seg.y);
 
   //straight
-  if (xPrev === 0 && xNext === 0)
-    return isFilled ? snakePart.body_vertical_fill : snakePart.body_vertical;
-
+  if (xPrev === 0 && xNext === 0) return isFilled ? snake.body_vertical_fill : snake.body_vertical;
   if (yPrev === 0 && yNext === 0)
-    return isFilled
-      ? snakePart.body_horizontal_fill
-      : snakePart.body_horizontal;
+    return isFilled ? snake.body_horizontal_fill : snake.body_horizontal;
 
   //corners
-  if (
-    (xPrev === unitSize && yNext === unitSize) ||
-    (yPrev === -unitSize && xNext === -unitSize)
-  )
-    return isFilled
-      ? snakePart.corner_left_down_fill
-      : snakePart.corner_left_down;
+  if ((xPrev === unitSize && yNext === unitSize) || (yPrev === -unitSize && xNext === -unitSize))
+    return isFilled ? snake.corner_left_down_fill : snake.corner_left_down;
 
-  if (
-    (xPrev === unitSize && yNext === -unitSize) ||
-    (yPrev === unitSize && xNext === -unitSize)
-  )
-    return isFilled
-      ? snakePart.corner_left_top_fill
-      : snakePart.corner_left_top;
+  if ((xPrev === unitSize && yNext === -unitSize) || (yPrev === unitSize && xNext === -unitSize))
+    return isFilled ? snake.corner_left_top_fill : snake.corner_left_top;
 
-  if (
-    (xPrev === -unitSize && yNext === -unitSize) ||
-    (yPrev === unitSize && xNext === unitSize)
-  )
-    return isFilled
-      ? snakePart.corner_right_top_fill
-      : snakePart.corner_right_top;
+  if ((xPrev === -unitSize && yNext === -unitSize) || (yPrev === unitSize && xNext === unitSize))
+    return isFilled ? snake.corner_right_top_fill : snake.corner_right_top;
 
-  if (
-    (xPrev === -unitSize && yNext === unitSize) ||
-    (yPrev === -unitSize && xNext === unitSize)
-  )
-    return isFilled
-      ? snakePart.corner_right_down_fill
-      : snakePart.corner_right_down;
+  if ((xPrev === -unitSize && yNext === unitSize) || (yPrev === -unitSize && xNext === unitSize))
+    return isFilled ? snake.corner_right_down_fill : snake.corner_right_down;
 }
 
 function moveSnake() {
-  lastTailPosition = {
+  const snake = game.entities.snake;
+  const vX = game.state.velocityX;
+  const vY = game.state.velocityY;
+
+  game.state.lastTailPosition = {
     x: snake[snake.length - 1].x,
     y: snake[snake.length - 1].y,
   };
@@ -199,53 +193,62 @@ function moveSnake() {
     snake[i].x = snake[i - 1].x;
     snake[i].y = snake[i - 1].y;
   }
-  if (velocityX === 1) snake[0].x += unitSize;
-  if (velocityX === -1) snake[0].x -= unitSize;
-  if (velocityY === 1) snake[0].y += unitSize;
-  if (velocityY === -1) snake[0].y -= unitSize;
+  if (vX === 1) game.entities.snake[0].x += unitSize;
+  if (vX === -1) game.entities.snake[0].x -= unitSize;
+  if (vY === 1) game.entities.snake[0].y += unitSize;
+  if (vY === -1) game.entities.snake[0].y -= unitSize;
 
-  canTurn = true;
+  game.state.canTurn = true;
 }
 
 function growSnake() {
+  const snake = game.entities.snake;
+  const apple = game.entities.apple;
+  const tailPos = game.state.lastTailPosition;
+  const applePos = game.state.applePosition
+
   if (snake[0].x === apple.x && snake[0].y === apple.y) {
-    applePosition.push({ x: apple.x, y: apple.y });
-    snake.push({ x: lastTailPosition.x, y: lastTailPosition.y });
+    applePos.push({ x: apple.x, y: apple.y });
+    snake.push({ x: tailPos.x, y: tailPos.y });
 
     makeFood();
 
-    if (gameSpeed == 120) {
-      score += 1;
-    } else if (gameSpeed == 100) {
-      score += 2;
-    } else if (gameSpeed == 80) {
-      score += 3;
-    } else if (gameSpeed == 60) {
-      score += 4;
-    } else if (gameSpeed == 40) {
-      score += 5;
+    if (game.config.gameSpeed == 120) {
+      game.state.score += 1;
+    } else if (game.config.gameSpeed == 100) {
+      game.state.score += 2;
+    } else if (game.config.gameSpeed == 80) {
+      game.state.score += 3;
+    } else if (game.config.gameSpeed == 60) {
+      game.state.score += 4;
+    } else if (game.config.gameSpeed == 40) {
+      game.state.score += 5;
     }
   }
 }
 
 function isFilled() {
-  if (applePosition.length === 0) return;
-  const apple = applePosition[0];
+  const snake = game.entities.snake;
+  const applePos = game.state.applePosition
+
+  if (applePos.length === 0) return;
+  const apple = applePos[0];
   const snakeArea = snake.some((seg) => apple.x === seg.x && apple.y === seg.y);
 
-  if (!snakeArea) applePosition.shift();
+  if (!snakeArea) applePos.shift();
 }
 
 function drawSnake() {
+  const snake = game.entities.snake;
   snake.forEach((segment, index) => {
     let sprite;
 
-    if (index === 0) sprite = getHeadSprite(velocityX, velocityY);
+    if (index === 0) sprite = getHeadSprite(game.state.velocityX, game.state.velocityY);
     else if (index === snake.length - 1) sprite = getTailSprite(segment, index);
     else sprite = getBodySprite(segment, index);
 
-    ctx.drawImage(
-      snakeSprite,
+    game.ui.ctx.drawImage(
+      game.assets.snakeSprite,
       sprite.x,
       sprite.y,
       sprite.width,
@@ -259,10 +262,12 @@ function drawSnake() {
 }
 
 function makeFood() {
+  const apple = game.entities.apple;
+
   apple.x = Math.floor(Math.random() * (canvasWidth / unitSize)) * unitSize;
   apple.y = Math.floor(Math.random() * (canvasHeight / unitSize)) * unitSize;
 
-  snake.forEach((snakeItem) => {
+  game.entities.snake.forEach((snakeItem) => {
     if (apple.x === snakeItem.x && apple.y === snakeItem.y) {
       makeFood();
     }
@@ -271,64 +276,65 @@ function makeFood() {
 
 function drawFood() {
   //ctx.drawImage(image, source x, source y, sWidth, sHeight, destination x, destination y, dWidth, dHeight)
-  ctx.drawImage(
-    appleSprite,
+  game.ui.ctx.drawImage(
+    game.assets.appleSprite,
     0,
     0,
     unitSize,
     unitSize,
-    apple.x,
-    apple.y,
+    game.entities.apple.x,
+    game.entities.apple.y,
     unitSize,
     unitSize
   );
 }
 
 function snakeDirection(event) {
-  if (!canTurn) return;
-  let prevX = velocityX;
-  let prevY = velocityY;
+  if (!game.state.canTurn) return;
+
+  let prevX = game.state.velocityX;
+  let prevY = game.state.velocityY;
 
   if (event.code === "ArrowLeft" && prevX !== 1) {
-    velocityX = -1;
-    velocityY = 0;
+    game.state.velocityX = -1;
+    game.state.velocityY = 0;
   } else if (event.code === "ArrowUp" && prevY !== 1) {
-    velocityX = 0;
-    velocityY = -1;
+    game.state.velocityX = 0;
+    game.state.velocityY = -1;
   } else if (event.code === "ArrowRight" && prevX != -1) {
-    velocityX = 1;
-    velocityY = 0;
+    game.state.velocityX = 1;
+    game.state.velocityY = 0;
   } else if (event.code === "ArrowDown" && prevY != -1) {
-    velocityX = 0;
-    velocityY = 1;
+    game.state.velocityX = 0;
+    game.state.velocityY = 1;
   }
-  canTurn = false;
+  game.state.canTurn = false;
 }
 
 function gameSpeedControl(btn) {
-  allDifficultyBtn.forEach((btn) => (btn.style.color = ""));
+  game.ui.allDifficultyBtn.forEach((btn) => (btn.style.color = ""));
 
-  if (!isRunning) {
+  if (!game.state.isRunning) {
     switch (btn.dataset.difficulty) {
       case "Normal":
-        gameSpeed = 120;
-        gameDifficulty = "Normal";
+        game.config.gameSpeed = 120;
+        game.state.difficulty = "Normal";
         break;
       case "Hard":
-        gameSpeed = 100;
-        gameDifficulty = "Hard";
+        game.config.gameSpeed = 100;
+        game.state.difficulty = "Hard";
         break;
       case "Expert":
-        gameSpeed = 80;
-        gameDifficulty = "Expert";
+        game.config.gameSpeed = 80;
+        game.state.difficulty = "Expert";
         break;
       case "Master":
-        gameSpeed = 60;
-        gameDifficulty = "Master";
+        game.config.gameSpeed = 60;
+        game.state.difficulty = "Master";
         break;
       case "Inferno":
-        gameSpeed = 40;
-        gameDifficulty = "Inferno";
+        game.config.gameSpeed = 40;
+        game.state.difficulty = "Inferno";
         break;
     }
     btn.style.color = "green";
@@ -336,6 +342,7 @@ function gameSpeedControl(btn) {
 }
 
 function gameOver() {
+  const snake = game.entities.snake;
   let snakeHead = snake[0];
 
   for (let i = 3; i < snake.length; i++) {
@@ -346,17 +353,17 @@ function gameOver() {
       snakeHead.y < 0 ||
       snakeHead.y > canvasHeight - unitSize
     ) {
-      isRunning = false;
-    
-      gameOverBackground.classList.add("show");
-      gameOverText.classList.add("show");
+      game.state.isRunning = false;
+
+      game.ui.gameOverBackground.classList.add("show");
+      game.ui.gameOverText.classList.add("show");
 
       setTimeout(() => {
         document.addEventListener("keydown", resetAndRemoveListener);
       }, 2000);
 
       setTimeout(() => {
-        pressAnyKeyMessage.style.opacity = 1;
+        game.ui.pressAnyKeyMessage.style.opacity = 1;
       }, 2000);
     }
   }
@@ -369,29 +376,24 @@ function resetAndRemoveListener() {
 }
 
 function resetGameOverlay() {
-  pressAnyKeyMessage.style.opacity = 0;
-
-  gameOverBackground.style.transition = "none";
-  gameOverText.style.transition = "none";
-
-  gameOverBackground.classList.remove("show");
-  gameOverText.classList.remove("show");
-
-  void gameOverBackground.offsetWidth;
-
-  gameOverBackground.style.transition = "opacity 0.5s ease-in";
-  gameOverText.style.transition = "opacity 1s ease-in 0.6s";
+  game.ui.pressAnyKeyMessage.style.opacity = 0;
+  game.ui.gameOverBackground.style.transition = "none";
+  game.ui.gameOverText.style.transition = "none";
+  game.ui.gameOverBackground.classList.remove("show");
+  game.ui.gameOverText.classList.remove("show");
+  void game.ui.gameOverBackground.offsetWidth;
+  game.ui.gameOverBackground.style.transition = "opacity 0.5s ease-in";
+  game.ui.gameOverText.style.transition = "opacity 1s ease-in 0.6s";
 }
 
 function resetGame() {
-  if (!isRunning) {
-    velocityX = 1;
-    velocityY = 0;
-    prevX = 0;
-    prevY = 0;
-    score = 0;
+  if (!game.state.isRunning) {
+    game.state.velocityX = 1;
+    game.state.velocityY = 0;
+
+    game.state.score = 0;
     applePosition = [];
-    snake = [
+    game.entities.snake = [
       { x: 3 * unitSize, y: 0 },
       { x: 2 * unitSize, y: 0 },
       { x: 1 * unitSize, y: 0 },
@@ -416,16 +418,16 @@ function getCurrentTime() {
 function setHighscore() {
   const scoreRow = document.querySelectorAll(".score-row");
 
-  if (!isRunning) {
+  if (!game.state.isRunning) {
     getCurrentTime();
     scoreRow.forEach((item) => item.remove());
     let highscore = JSON.parse(localStorage.getItem("Snake-Highscore") || "[]");
 
-    if (score > 0) {
+    if (game.state.score > 0) {
       highscore.push({
-        score: score,
+        score: game.state.score,
         date: getCurrentTime(),
-        difficulty: gameDifficulty,
+        difficulty: game.state.difficulty,
       });
     }
 
@@ -455,7 +457,7 @@ function setHighscore() {
       div.appendChild(dateSpan);
       div.appendChild(scoreSpan);
 
-      highscoreList.appendChild(div);
+      game.ui.highscoreList.appendChild(div);
     }
   }
 }
