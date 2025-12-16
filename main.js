@@ -6,7 +6,7 @@ const gameOverBackground = document.querySelector(".game-over-background");
 const pressAnyKeyMessage = document.getElementById("press-any-key");
 const highscoreList = document.getElementById("highscore-container");
 
-//Fix this
+//Fix this...
 const normalBtn = document.getElementById("normal-btn");
 const hardBtn = document.getElementById("hard-btn");
 const expertBtn = document.getElementById("expert-btn");
@@ -479,3 +479,4 @@ document.addEventListener("keydown", snakeDirection);
 document
   .querySelectorAll(".difficulty-btn")
   .forEach((btn) => btn.addEventListener("click", gameSpeedControl));
+
