@@ -392,7 +392,7 @@ function resetGame() {
     game.state.velocityY = 0;
 
     game.state.score = 0;
-    applePosition = [];
+    game.state.applePosition = [];
     game.entities.snake = [
       { x: 3 * unitSize, y: 0 },
       { x: 2 * unitSize, y: 0 },
