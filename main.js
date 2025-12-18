@@ -89,6 +89,7 @@ const canvasHeight = game.ui.canvas.height;
 
 //let randomTimer = 5 + Math.random() * 10; //FOR CARROT
 
+
 function gameStart() {
   setHighscore();
   resetGameOverlay();
@@ -96,6 +97,7 @@ function gameStart() {
 
   gameLoop();
 }
+
 function gameLoop() {
   game.ui.ctx.filter = game.state.isRunning ? "none" : "grayscale(100%)";
   game.ui.scoreText.textContent = `${game.state.score.toString().padStart(4, "0")}`;
@@ -139,7 +141,7 @@ function getHeadSprite(vX, vY) {
 
 function getTailSprite(seg, i) {
   const snake = game.entities.snakePart;
-  const applePos = game.state.applePosition
+  const applePos = game.state.applePosition;
   const isFilled = applePos.some((apple) => apple.x === seg.x && apple.y === seg.y);
   let prev = game.entities.snake[i - 1];
 
@@ -149,6 +151,7 @@ function getTailSprite(seg, i) {
   if (prev.y > seg.y) return isFilled ? snake.tail_top_fill : snake.tail_top;
 }
 
+//prettier-ignore
 function getBodySprite(seg, i) {
   const snake = game.entities.snakePart;
   const applePos = game.state.applePosition;
@@ -166,21 +169,30 @@ function getBodySprite(seg, i) {
     return isFilled ? snake.body_horizontal_fill : snake.body_horizontal;
 
   //corners
-  if ((xPrev === unitSize && yNext === unitSize) || (yPrev === -unitSize && xNext === -unitSize))
+  if (
+    (xPrev === unitSize && yNext === unitSize) ||
+    (yPrev === -unitSize && xNext === -unitSize))
     return isFilled ? snake.corner_left_down_fill : snake.corner_left_down;
 
-  if ((xPrev === unitSize && yNext === -unitSize) || (yPrev === unitSize && xNext === -unitSize))
+  if (
+    (xPrev === unitSize && yNext === -unitSize) ||
+    (yPrev === unitSize && xNext === -unitSize))
     return isFilled ? snake.corner_left_top_fill : snake.corner_left_top;
 
-  if ((xPrev === -unitSize && yNext === -unitSize) || (yPrev === unitSize && xNext === unitSize))
+  if (
+    (xPrev === -unitSize && yNext === -unitSize) ||
+    (yPrev === unitSize && xNext === unitSize))
     return isFilled ? snake.corner_right_top_fill : snake.corner_right_top;
 
-  if ((xPrev === -unitSize && yNext === unitSize) || (yPrev === -unitSize && xNext === unitSize))
+  if (
+    (xPrev === -unitSize && yNext === unitSize) ||
+    (yPrev === -unitSize && xNext === unitSize))
     return isFilled ? snake.corner_right_down_fill : snake.corner_right_down;
 }
 
 function moveSnake() {
   const snake = game.entities.snake;
+
   const vX = game.state.velocityX;
   const vY = game.state.velocityY;
 
@@ -205,7 +217,7 @@ function growSnake() {
   const snake = game.entities.snake;
   const apple = game.entities.apple;
   const tailPos = game.state.lastTailPosition;
-  const applePos = game.state.applePosition
+  const applePos = game.state.applePosition;
 
   if (snake[0].x === apple.x && snake[0].y === apple.y) {
     applePos.push({ x: apple.x, y: apple.y });
@@ -229,7 +241,7 @@ function growSnake() {
 
 function isFilled() {
   const snake = game.entities.snake;
-  const applePos = game.state.applePosition
+  const applePos = game.state.applePosition;
 
   if (applePos.length === 0) return;
   const apple = applePos[0];
@@ -267,8 +279,8 @@ function makeFood() {
   apple.x = Math.floor(Math.random() * (canvasWidth / unitSize)) * unitSize;
   apple.y = Math.floor(Math.random() * (canvasHeight / unitSize)) * unitSize;
 
-  game.entities.snake.forEach((snakeItem) => {
-    if (apple.x === snakeItem.x && apple.y === snakeItem.y) {
+  game.entities.snake.forEach((snakeSegment) => {
+    if (apple.x === snakeSegment.x && apple.y === snakeSegment.y) {
       makeFood();
     }
   });
@@ -295,16 +307,16 @@ function snakeDirection(event) {
   let prevX = game.state.velocityX;
   let prevY = game.state.velocityY;
 
-  if (event.code === "ArrowLeft" && prevX !== 1) {
+  if (event.code === "ArrowLeft" || (event.code === "KeyA" && prevX !== 1)) {
     game.state.velocityX = -1;
     game.state.velocityY = 0;
-  } else if (event.code === "ArrowUp" && prevY !== 1) {
+  } else if (event.code === "ArrowUp" || (event.code === "KeyW" && prevY !== 1)) {
     game.state.velocityX = 0;
     game.state.velocityY = -1;
-  } else if (event.code === "ArrowRight" && prevX != -1) {
+  } else if (event.code === "ArrowRight" || (event.code === "KeyD" && prevX != -1)) {
     game.state.velocityX = 1;
     game.state.velocityY = 0;
-  } else if (event.code === "ArrowDown" && prevY != -1) {
+  } else if (event.code === "ArrowDown" || (event.code === "KeyS" && prevY != -1)) {
     game.state.velocityX = 0;
     game.state.velocityY = 1;
   }
@@ -392,7 +404,7 @@ function resetGame() {
     game.state.velocityY = 0;
 
     game.state.score = 0;
-    applePosition = [];
+    game.state.applePosition = [];
     game.entities.snake = [
       { x: 3 * unitSize, y: 0 },
       { x: 2 * unitSize, y: 0 },
@@ -419,7 +431,6 @@ function setHighscore() {
   const scoreRow = document.querySelectorAll(".score-row");
 
   if (!game.state.isRunning) {
-    getCurrentTime();
     scoreRow.forEach((item) => item.remove());
     let highscore = JSON.parse(localStorage.getItem("Snake-Highscore") || "[]");
 
@@ -431,19 +442,16 @@ function setHighscore() {
       });
     }
 
-    highscore.sort((a, b) => b.score - a.score);
-    highscore = highscore.slice(0, 5);
-
+    highscore.sort((a, b) => b.score - a.score).slice(0, 5);
     localStorage.setItem("Snake-Highscore", JSON.stringify(highscore));
 
     for (let i = 0; i < 5; i++) {
       const div = document.createElement("div");
-      div.classList.add("score-row");
-
       const dateSpan = document.createElement("span");
-      dateSpan.classList.add("date-col");
-
       const scoreSpan = document.createElement("span");
+
+      div.classList.add("score-row");
+      dateSpan.classList.add("date-col");
       scoreSpan.classList.add("score-col");
 
       if (highscore[i]) {
