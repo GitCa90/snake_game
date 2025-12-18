@@ -3,9 +3,8 @@ const unitSize = 25;
 const game = {
   state: {
     isRunning: false,
-    canTurn: true,
-    velocityX: 1,
-    velocityY: 0,
+    direction: { x: 1, y: 0 },
+    nextDirection: { x: 1, y: 0 },
     score: 0,
     difficulty: "normal",
     lastTailPosition: null,
@@ -88,7 +87,6 @@ const canvasWidth = game.ui.canvas.width;
 const canvasHeight = game.ui.canvas.height;
 
 //let randomTimer = 5 + Math.random() * 10; //FOR CARROT
-
 
 function gameStart() {
   setHighscore();
@@ -191,10 +189,11 @@ function getBodySprite(seg, i) {
 }
 
 function moveSnake() {
-  const snake = game.entities.snake;
+  game.state.direction = game.state.nextDirection;
 
-  const vX = game.state.velocityX;
-  const vY = game.state.velocityY;
+  const snake = game.entities.snake;
+  const vX = game.state.direction.x;
+  const vY = game.state.direction.y;
 
   game.state.lastTailPosition = {
     x: snake[snake.length - 1].x,
@@ -205,12 +204,11 @@ function moveSnake() {
     snake[i].x = snake[i - 1].x;
     snake[i].y = snake[i - 1].y;
   }
-  if (vX === 1) game.entities.snake[0].x += unitSize;
-  if (vX === -1) game.entities.snake[0].x -= unitSize;
-  if (vY === 1) game.entities.snake[0].y += unitSize;
-  if (vY === -1) game.entities.snake[0].y -= unitSize;
 
-  game.state.canTurn = true;
+  if (vX === 1) snake[0].x += unitSize;
+  if (vX === -1) snake[0].x -= unitSize;
+  if (vY === 1) snake[0].y += unitSize;
+  if (vY === -1) snake[0].y -= unitSize;
 }
 
 function growSnake() {
@@ -255,7 +253,7 @@ function drawSnake() {
   snake.forEach((segment, index) => {
     let sprite;
 
-    if (index === 0) sprite = getHeadSprite(game.state.velocityX, game.state.velocityY);
+    if (index === 0) sprite = getHeadSprite(game.state.direction.x, game.state.direction.y);
     else if (index === snake.length - 1) sprite = getTailSprite(segment, index);
     else sprite = getBodySprite(segment, index);
 
@@ -302,25 +300,30 @@ function drawFood() {
 }
 
 function snakeDirection(event) {
-  if (!game.state.canTurn) return;
+  let currentDir = game.state.direction;
 
-  let prevX = game.state.velocityX;
-  let prevY = game.state.velocityY;
+  const up = { x: 0, y: -1 };
+  const left = { x: -1, y: 0 };
+  const right = { x: 1, y: 0 };
+  const down = { x: 0, y: 1 };
 
-  if (event.code === "ArrowLeft" || (event.code === "KeyA" && prevX !== 1)) {
-    game.state.velocityX = -1;
-    game.state.velocityY = 0;
-  } else if (event.code === "ArrowUp" || (event.code === "KeyW" && prevY !== 1)) {
-    game.state.velocityX = 0;
-    game.state.velocityY = -1;
-  } else if (event.code === "ArrowRight" || (event.code === "KeyD" && prevX != -1)) {
-    game.state.velocityX = 1;
-    game.state.velocityY = 0;
-  } else if (event.code === "ArrowDown" || (event.code === "KeyS" && prevY != -1)) {
-    game.state.velocityX = 0;
-    game.state.velocityY = 1;
-  }
-  game.state.canTurn = false;
+  const keyMap = {
+    ArrowUp: up,
+    KeyW: up,
+    ArrowLeft: left,
+    KeyA: left,
+    ArrowRight: right,
+    KeyD: right,
+    ArrowDown: down,
+    KeyS: down,
+  };
+
+  const tmp = keyMap[event.code];
+
+  if (!tmp) return;
+  if (tmp.x === -currentDir.x && tmp.y === -currentDir.y) return;
+
+  game.state.nextDirection = tmp;
 }
 
 function gameSpeedControl(btn) {
@@ -400,9 +403,8 @@ function resetGameOverlay() {
 
 function resetGame() {
   if (!game.state.isRunning) {
-    game.state.velocityX = 1;
-    game.state.velocityY = 0;
-
+    game.state.direction = { x: 1, y: 0 };
+    game.state.nextDirection = { x: 1, y: 0 };
     game.state.score = 0;
     game.state.applePosition = [];
     game.entities.snake = [
