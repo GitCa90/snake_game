@@ -29,8 +29,8 @@ const game = {
   },
 
   config: {
-    gameSpeed: 120,
-    carrotTimer: 6,
+    gameSpeed: 10,
+    carrotTimer: 2,
     canvasColor: "aliceblue",
     points: {
       apple: {
@@ -345,12 +345,20 @@ function drawFoodItem(item, x, y) {
 }
 
 function randomPosition(item) {
-  item.x = Math.floor(Math.random() * (canvasWidth / unitSize)) * unitSize;
-  item.y = Math.floor(Math.random() * (canvasHeight / unitSize)) * unitSize;
+  const foodPosition = game.state.foodPosition;
+  let validPosition = false;
 
-  game.entities.snake.forEach((snakeSegment) => {
-    if (item.x === snakeSegment.x && item.y === snakeSegment.y) randomPosition(item);
-  });
+  while (!validPosition) {
+    item.x = Math.floor(Math.random() * (canvasWidth / unitSize)) * unitSize;
+    item.y = Math.floor(Math.random() * (canvasHeight / unitSize)) * unitSize;
+
+    validPosition = true;
+    game.entities.snake.forEach((snakeSegment) => {
+      if (item.x === snakeSegment.x && item.y === snakeSegment.y) validPosition = false;
+    });
+
+    if (item.x === foodPosition.x && item.y === foodPosition.y) validPosition = false;
+  }
 
   item.position.x = item.x;
   item.position.y = item.y;
@@ -380,29 +388,27 @@ function foodLogic(item, type) {
 }
 
 function carrotLogic() {
-  console.log("Carrot");
   if (game.state.carrotSpawn || !game.state.isRunning) return;
-
-  const randomTimer = 5000;
+  const randomTimer = 3000;
   //5000 + Math.random() * 10000;
-  const carrotPos = game.sprite.carrot.position;
-  const applePos = game.sprite.apple.position;
-
-  if (carrotPos.x === applePos.x && carrotPos.y === applePos.y) randomPosition(game.sprite.carrot);
 
   setTimeout(() => {
     game.state.carrotSpawn = true;
-    
-    
+    const carrotPos = game.sprite.carrot.position;
+    const applePos = game.sprite.apple.position;
 
     if (game.state.carrotSpawn && game.state.isRunning) {
+      if (carrotPos.x === applePos.x && carrotPos.y === applePos.y) {
+        randomPosition(game.sprite.carrot);
+        console.log("New carrot position");
+      }
+
       let count = game.config.carrotTimer;
       game.ui.specialCountDown.textContent = String(count).padStart(2, "0");
       game.ui.specialIcon.src = "./images/carrot-icon.png";
+
       const countDown = setInterval(() => {
         count--;
-
-        game.ui.specialIcon.src = "./images/carrot-icon.png";
         game.ui.specialCountDown.textContent = String(count).padStart(2, "0");
 
         if (count <= 0 || game.state.carrotSpawn === false) {
@@ -413,6 +419,7 @@ function carrotLogic() {
         }
         carrotLogic();
       }, 1000);
+      console.log("Carrot");
     }
   }, randomTimer);
 }
