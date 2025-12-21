@@ -8,7 +8,10 @@ const game = {
     score: 0,
     difficulty: "normal",
     lastTailPosition: null,
-    applePosition: [],
+    foodPosition: [],
+    lastTime: 0,
+    accumulator: 0,
+    carrotSpawn: false,
   },
 
   ui: {
@@ -21,15 +24,33 @@ const game = {
     highscoreList: document.getElementById("highscore-container"),
     normalBtn: document.getElementById("normal-btn"),
     allDifficultyBtn: document.querySelectorAll(".difficulty-btn"),
+    specialIcon: document.getElementById("special-Icon"),
+    specialCountDown: document.getElementById("special-countdown"),
   },
 
   config: {
     gameSpeed: 120,
+    carrotTimer: 6,
     canvasColor: "aliceblue",
+    points: {
+      apple: {
+        120: 1,
+        100: 2,
+        80: 3,
+        60: 4,
+        40: 5,
+      },
+      carrot: {
+        120: 10,
+        100: 20,
+        80: 30,
+        60: 40,
+        40: 50,
+      },
+    },
   },
 
   entities: {
-    apple: { x: 0, y: 0 },
     snake: [
       { x: 3 * unitSize, y: 0 },
       { x: 2 * unitSize, y: 0 },
@@ -66,17 +87,45 @@ const game = {
     },
   },
 
-  assets: {
-    snakeSprite: (() => {
+  sprite: {
+    snake: (() => {
       const img = new Image();
       img.src = "./images/snake-sprite.png";
       return img;
     })(),
-    appleSprite: (() => {
-      const img = new Image();
-      img.src = "./images/apple-sprite.png";
-      return img;
-    })(),
+
+    apple: {
+      sprite: (() => {
+        const img = new Image();
+        img.src = "./images/apple-sprite.png";
+        return img;
+      })(),
+      position: { x: 0, y: 0 },
+      frames: [{ x: 0, y: 0 }],
+      animation: {
+        frame: 0,
+        fps: 0,
+        accumulator: 0,
+      },
+    },
+
+    carrot: {
+      sprite: (() => {
+        const img = new Image();
+        img.src = "./images/carrot-sprite-anim.png";
+        return img;
+      })(),
+      position: { x: 0, y: 0 },
+      frames: [
+        { x: 0, y: 0 },
+        { x: 25, y: 0 },
+      ],
+      animation: {
+        frame: 0,
+        fps: 2,
+        accumulator: 0,
+      },
+    },
   },
 };
 
@@ -86,63 +135,90 @@ game.ui.normalBtn.style.color = "green";
 const canvasWidth = game.ui.canvas.width;
 const canvasHeight = game.ui.canvas.height;
 
-//let randomTimer = 5 + Math.random() * 10; //FOR CARROT
+function updateAnimation(item, delta) {
+  if (!item.animation) return;
+
+  item.animation.accumulator += delta;
+  const frameDuration = 1000 / item.animation.fps;
+
+  if (item.animation.accumulator >= frameDuration) {
+    item.animation.frame = (item.animation.frame + 1) % item.frames.length;
+    item.animation.accumulator -= frameDuration;
+  }
+}
+
+function render() {
+  game.ui.ctx.filter = game.state.isRunning ? "none" : "grayscale(100%)";
+  game.ui.scoreText.textContent = `${game.state.score.toString().padStart(4, "0")}`;
+
+  clearBoard();
+  drawSnake();
+  drawFood();
+}
+
+function update(delta) {
+  updateAnimation(game.sprite.carrot, delta);
+}
 
 function gameStart() {
   setHighscore();
   resetGameOverlay();
   game.state.isRunning = true;
-
-  gameLoop();
+  game.state.lastTime = 0;
+  game.state.accumulator = 0;
+  requestAnimationFrame(gameLoop);
 }
 
-function gameLoop() {
-  game.ui.ctx.filter = game.state.isRunning ? "none" : "grayscale(100%)";
-  game.ui.scoreText.textContent = `${game.state.score.toString().padStart(4, "0")}`;
+function gameLoop(timestamp) {
+  //time
+  const last = game.state.lastTime || timestamp;
+  const delta = timestamp - last;
+  game.state.lastTime = timestamp;
+
+  update(delta);
+
+  game.state.accumulator += delta;
 
   disableDifficultyButton();
 
-  if (game.state.isRunning) {
-    clearBoard();
+  //tick, movement
+  while (game.state.accumulator >= game.config.gameSpeed && game.state.isRunning) {
     moveSnake();
-    growSnake();
+    foodLogic(game.sprite.apple, "apple");
+    foodLogic(game.sprite.carrot, "carrot");
     isFilled();
-    drawSnake();
-    drawFood();
     gameOver();
 
-    setTimeout(gameLoop, game.config.gameSpeed);
-  } else {
-    drawSnake();
-    drawFood();
+    game.state.accumulator -= game.config.gameSpeed;
   }
+
+  //draw
+  render();
+  requestAnimationFrame(gameLoop);
 }
 
 function disableDifficultyButton() {
   game.ui.allDifficultyBtn.forEach((btn) => (btn.disabled = game.state.isRunning));
 }
 
-function clearBoard() {
-  game.ui.ctx.fillStyle = game.config.canvasColor;
-  game.ui.ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-}
-
 function getHeadSprite(vX, vY) {
   const snake = game.entities.snakePart;
-
-  if (vX === 1) return snake.head_right;
-  if (vX === -1) return snake.head_left;
-  if (vY === 1) return snake.head_down;
-  if (vY === -1) return snake.head_top;
-  return snake.head_right;
+  const direction = {
+    "1,0": snake.head_right,
+    "-1,0": snake.head_left,
+    "0,1": snake.head_down,
+    "0,-1": snake.head_top,
+  };
+  return direction[`${vX},${vY}`] || snake.head_right;
 }
 
 function getTailSprite(seg, i) {
   const snake = game.entities.snakePart;
-  const applePos = game.state.applePosition;
-  const isFilled = applePos.some((apple) => apple.x === seg.x && apple.y === seg.y);
+  const foodPosition = game.state.foodPosition;
+  const isFilled = foodPosition.some((apple) => apple.x === seg.x && apple.y === seg.y);
   let prev = game.entities.snake[i - 1];
 
+  //MAPPING
   if (prev.x < seg.x) return isFilled ? snake.tail_right_fill : snake.tail_right;
   if (prev.x > seg.x) return isFilled ? snake.tail_left_fill : snake.tail_left;
   if (prev.y < seg.y) return isFilled ? snake.tail_down_fill : snake.tail_down;
@@ -152,14 +228,14 @@ function getTailSprite(seg, i) {
 //prettier-ignore
 function getBodySprite(seg, i) {
   const snake = game.entities.snakePart;
-  const applePos = game.state.applePosition;
+  const foodPosition = game.state.foodPosition;
   let prev = game.entities.snake[i - 1];
   let next = game.entities.snake[i + 1];
   const xPrev = seg.x - prev.x;
   const yPrev = seg.y - prev.y;
   const xNext = next.x - seg.x;
   const yNext = next.y - seg.y;
-  const isFilled = applePos.some((apple) => apple.x === seg.x && apple.y === seg.y);
+  const isFilled = foodPosition.some((apple) => apple.x === seg.x && apple.y === seg.y);
 
   //straight
   if (xPrev === 0 && xNext === 0) return isFilled ? snake.body_vertical_fill : snake.body_vertical;
@@ -192,60 +268,35 @@ function moveSnake() {
   game.state.direction = game.state.nextDirection;
 
   const snake = game.entities.snake;
+  const tail = snake[snake.length - 1];
   const vX = game.state.direction.x;
   const vY = game.state.direction.y;
 
-  game.state.lastTailPosition = {
-    x: snake[snake.length - 1].x,
-    y: snake[snake.length - 1].y,
-  };
+  game.state.lastTailPosition = { x: tail.x, y: tail.y };
 
   for (let i = snake.length - 1; i > 0; i--) {
     snake[i].x = snake[i - 1].x;
     snake[i].y = snake[i - 1].y;
   }
 
-  if (vX === 1) snake[0].x += unitSize;
-  if (vX === -1) snake[0].x -= unitSize;
-  if (vY === 1) snake[0].y += unitSize;
-  if (vY === -1) snake[0].y -= unitSize;
-}
-
-function growSnake() {
-  const snake = game.entities.snake;
-  const apple = game.entities.apple;
-  const tailPos = game.state.lastTailPosition;
-  const applePos = game.state.applePosition;
-
-  if (snake[0].x === apple.x && snake[0].y === apple.y) {
-    applePos.push({ x: apple.x, y: apple.y });
-    snake.push({ x: tailPos.x, y: tailPos.y });
-
-    makeFood();
-
-    if (game.config.gameSpeed == 120) {
-      game.state.score += 1;
-    } else if (game.config.gameSpeed == 100) {
-      game.state.score += 2;
-    } else if (game.config.gameSpeed == 80) {
-      game.state.score += 3;
-    } else if (game.config.gameSpeed == 60) {
-      game.state.score += 4;
-    } else if (game.config.gameSpeed == 40) {
-      game.state.score += 5;
-    }
-  }
+  snake[0].x += vX * unitSize;
+  snake[0].y += vY * unitSize;
 }
 
 function isFilled() {
   const snake = game.entities.snake;
-  const applePos = game.state.applePosition;
+  const foodPosition = game.state.foodPosition;
 
-  if (applePos.length === 0) return;
-  const apple = applePos[0];
+  if (foodPosition.length === 0) return;
+  const apple = foodPosition[0];
   const snakeArea = snake.some((seg) => apple.x === seg.x && apple.y === seg.y);
 
-  if (!snakeArea) applePos.shift();
+  if (!snakeArea) foodPosition.shift();
+}
+
+function clearBoard() {
+  game.ui.ctx.fillStyle = game.config.canvasColor;
+  game.ui.ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 }
 
 function drawSnake() {
@@ -258,7 +309,7 @@ function drawSnake() {
     else sprite = getBodySprite(segment, index);
 
     game.ui.ctx.drawImage(
-      game.assets.snakeSprite,
+      game.sprite.snake,
       sprite.x,
       sprite.y,
       sprite.width,
@@ -271,37 +322,102 @@ function drawSnake() {
   });
 }
 
-function makeFood() {
-  const apple = game.entities.apple;
-
-  apple.x = Math.floor(Math.random() * (canvasWidth / unitSize)) * unitSize;
-  apple.y = Math.floor(Math.random() * (canvasHeight / unitSize)) * unitSize;
-
-  game.entities.snake.forEach((snakeSegment) => {
-    if (apple.x === snakeSegment.x && apple.y === snakeSegment.y) {
-      makeFood();
-    }
-  });
+function drawFood() {
+  drawFoodItem(game.sprite.apple, game.sprite.apple.x, game.sprite.apple.y);
+  if (game.state.carrotSpawn)
+    drawFoodItem(game.sprite.carrot, game.sprite.carrot.x, game.sprite.carrot.y);
 }
 
-function drawFood() {
-  //ctx.drawImage(image, source x, source y, sWidth, sHeight, destination x, destination y, dWidth, dHeight)
+function drawFoodItem(item, x, y) {
+  const frame = item.frames ? item.frames[item.animation.frame] : { x: 0, y: 0 };
+
   game.ui.ctx.drawImage(
-    game.assets.appleSprite,
-    0,
-    0,
+    item.sprite,
+    frame.x,
+    frame.y,
     unitSize,
     unitSize,
-    game.entities.apple.x,
-    game.entities.apple.y,
+    x,
+    y,
     unitSize,
     unitSize
   );
 }
 
-function snakeDirection(event) {
-  let currentDir = game.state.direction;
+function randomPosition(item) {
+  item.x = Math.floor(Math.random() * (canvasWidth / unitSize)) * unitSize;
+  item.y = Math.floor(Math.random() * (canvasHeight / unitSize)) * unitSize;
 
+  game.entities.snake.forEach((snakeSegment) => {
+    if (item.x === snakeSegment.x && item.y === snakeSegment.y) randomPosition(item);
+  });
+
+  item.position.x = item.x;
+  item.position.y = item.y;
+}
+
+function foodLogic(item, type) {
+  const snake = game.entities.snake;
+  const tailPos = game.state.lastTailPosition;
+  const foodPosition = game.state.foodPosition;
+  const speed = game.config.gameSpeed;
+
+  const itemPoints = game.config.points[type][speed];
+
+  if (snake[0].x === item.x && snake[0].y === item.y) {
+    foodPosition.push({ x: item.x, y: item.y });
+    snake.push({ ...tailPos });
+
+    if (type === "carrot") {
+      game.state.carrotSpawn = false;
+      game.ui.specialCountDown.textContent = "";
+      game.ui.specialIcon.src = "";
+    }
+
+    game.state.score += itemPoints;
+    randomPosition(item);
+  }
+}
+
+function carrotLogic() {
+  console.log("Carrot");
+  if (game.state.carrotSpawn || !game.state.isRunning) return;
+
+  const randomTimer = 5000;
+  //5000 + Math.random() * 10000;
+  const carrotPos = game.sprite.carrot.position;
+  const applePos = game.sprite.apple.position;
+
+  if (carrotPos.x === applePos.x && carrotPos.y === applePos.y) randomPosition(game.sprite.carrot);
+
+  setTimeout(() => {
+    game.state.carrotSpawn = true;
+    
+    
+
+    if (game.state.carrotSpawn && game.state.isRunning) {
+      let count = game.config.carrotTimer;
+      game.ui.specialCountDown.textContent = String(count).padStart(2, "0");
+      game.ui.specialIcon.src = "./images/carrot-icon.png";
+      const countDown = setInterval(() => {
+        count--;
+
+        game.ui.specialIcon.src = "./images/carrot-icon.png";
+        game.ui.specialCountDown.textContent = String(count).padStart(2, "0");
+
+        if (count <= 0 || game.state.carrotSpawn === false) {
+          clearInterval(countDown);
+          game.state.carrotSpawn = false;
+          game.ui.specialCountDown.textContent = "";
+          game.ui.specialIcon.src = "";
+        }
+        carrotLogic();
+      }, 1000);
+    }
+  }, randomTimer);
+}
+
+function snakeDirection(event) {
   const up = { x: 0, y: -1 };
   const left = { x: -1, y: 0 };
   const right = { x: 1, y: 0 };
@@ -319,6 +435,7 @@ function snakeDirection(event) {
   };
 
   const tmp = keyMap[event.code];
+  const currentDir = game.state.direction;
 
   if (!tmp) return;
   if (tmp.x === -currentDir.x && tmp.y === -currentDir.y) return;
@@ -372,6 +489,9 @@ function gameOver() {
 
       game.ui.gameOverBackground.classList.add("show");
       game.ui.gameOverText.classList.add("show");
+      game.state.carrotSpawn = false;
+      game.ui.specialCountDown.textContent = "";
+      game.ui.specialIcon.src = "";
 
       setTimeout(() => {
         document.addEventListener("keydown", resetAndRemoveListener);
@@ -403,10 +523,11 @@ function resetGameOverlay() {
 
 function resetGame() {
   if (!game.state.isRunning) {
+    game.state.carrotSpawn = false;
     game.state.direction = { x: 1, y: 0 };
     game.state.nextDirection = { x: 1, y: 0 };
     game.state.score = 0;
-    game.state.applePosition = [];
+    game.state.foodPosition = [];
     game.entities.snake = [
       { x: 3 * unitSize, y: 0 },
       { x: 2 * unitSize, y: 0 },
@@ -415,6 +536,9 @@ function resetGame() {
     ];
   }
   gameStart();
+  randomPosition(game.sprite.apple);
+  randomPosition(game.sprite.carrot);
+  carrotLogic();
 }
 
 function getCurrentTime() {
@@ -473,7 +597,9 @@ function setHighscore() {
 }
 
 gameStart();
-makeFood();
+randomPosition(game.sprite.apple);
+randomPosition(game.sprite.carrot);
+carrotLogic();
 
 document.addEventListener("keydown", snakeDirection);
 document.getElementById("difficulty-section").addEventListener("click", (e) => {

@@ -7,12 +7,22 @@
     <title>Snake</title>
   </head>
   <body>
+    <section id="game-mode-container">
+      <div class="game-mode"><div class="game-mode-inner">NORMAL</div><div class="star">&#9733;&#9733;&#9733;</div></div>
+      <div class="game-mode"><div class="game-mode-inner">HARD</div><div class="star">&#9733;&#9733;&#9733;</div></div>
+      <div class="game-mode"><div class="game-mode-inner">EXPERT</div><div class="star">&#9733;&#9733;&#9733;</div></div>
+      <div class="game-mode"><div class="game-mode-inner">MASTER</div><div class="star">&#9733;&#9733;&#9733;</div></div>
+      <div class="game-mode"><div class="game-mode-inner">INFERNO</div><div class="star">&#9733;&#9733;&#9733;</div></div>
+    </section>
     <div id="main-container">
       <div id="playerboard">
         <div id="score"></div>
-        <div id="special-countdown">!!00</div>
+        <div>
+          <img id="special-Icon" />
+          <span id="special-countdown"></span>
+        </div>
       </div>
-      <div id="score-line"></div>
+
       <div id="canvas-wrap">
         <canvas id="canvas" width="600" height="400"></canvas>
         <div class="game-over"></div>
@@ -37,19 +47,11 @@
           <p id="settings-text">SETTINGS</p>
 
           <div id="difficulty-section">
-            <button id="normal-btn" class="difficulty-btn" data-difficulty="Normal">
-              Normal
-            </button>
+            <button id="normal-btn" class="difficulty-btn" data-difficulty="Normal">Normal</button>
             <button class="difficulty-btn" data-difficulty="Hard">Hard</button>
-            <button class="difficulty-btn" data-difficulty="Expert">
-              Expert
-            </button>
-            <button class="difficulty-btn" data-difficulty="Master">
-              Master
-            </button>
-            <button class="difficulty-btn" data-difficulty="Inferno">
-              Inferno
-            </button>
+            <button class="difficulty-btn" data-difficulty="Expert">Expert</button>
+            <button class="difficulty-btn" data-difficulty="Master">Master</button>
+            <button class="difficulty-btn" data-difficulty="Inferno">Inferno</button>
           </div>
         </div>
       </div>

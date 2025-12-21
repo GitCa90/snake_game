@@ -1,32 +1,74 @@
-
 * {
   user-select: none;
 }
 
+body {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+
+  background-color: var(--bodyColor);
+}
+
 :root {
   --borderColor: rgba(0, 0, 0, 0.5);
+  --bodyColor: rgb(50, 50, 50);
+  --fontColor: rgb(230, 230, 230);
 }
 
 #main-container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
+}
+
+#game-mode-container {
+  display: flex;
+  flex-direction: column;
+  width: 200px;
+  margin-top: 77px;
+  
+}
+
+.game-mode-inner, .star {
+  padding-left: 5px;
+  padding-top: 10px;
+}
+
+.game-mode {
+  border: solid 1px black;
+  background-color: rgb(216, 104, 0);
+  color: var(--fontColor);
+  height: 68px;
+  margin-bottom: 20px;
+  margin-right: 20px;
+  box-sizing: border-box;
 }
 
 #playerboard {
   display: flex;
-  gap: 440px;
+  position: relative;
+  justify-content: space-between;
   margin-top: 20px;
   font-size: 50px;
+  width: 620px; /* or fixed width */
+  min-width: 600px; /* prevent shrinking */
+  color: var(--fontColor);
 }
 
-#score-line {
-  background-color: grey;
-  height: 10px;
-  width: 620px;
-  margin-bottom: 10px;
-  margin-top: 10px;
+#score-left {
+  position: absolute;
+  left: 0;
+}
+
+#score-right {
+  position: absolute;
+  right: 0;
+}
+
+#special-timer {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 #canvas-wrap {
@@ -38,6 +80,7 @@
 #canvas {
   border: solid 10px var(--borderColor);
   background-color: aliceblue;
+  box-sizing: border-box;
 }
 
 .game-over {
@@ -76,6 +119,7 @@
 
 #press-any-key {
   opacity: 0;
+  color: var(--fontColor);
 }
 
 .game-over-background.show {
@@ -96,6 +140,7 @@
   width: 600px;
   font-size: 20px;
 }
+
 
 #date-score-header,
 .score-row {
