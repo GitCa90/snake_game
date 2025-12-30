@@ -9,27 +9,30 @@ export const gameState = {
     score: 0,
     lastTailPosition: null,
     wallCollision: true,
+    perksUnlocked: false,
 };
 
 export const modeState = {
     modeSelected: "normal",
-    normal: true,
-    hard: true,
-    expert: true,
-    master: false,
-    inferno: false,
+    modes: {
+        normal: { unlocked: true },
+        hard: { unlocked: false },
+        expert: { unlocked: false },
+        master: { unlocked: false },
+        inferno: { unlocked: false },
+    },
 };
 
 export const foodState = {
     eatenFoodPositions: [],
-    currentSpecialFood: null,       //WHAT FOOD IS CHOSEN
-    specialFoodSpawnTimer: 3000,    //TIMER BEFORE FUNCTION CALL
+    currentSpecialFood: null, //WHAT FOOD IS CHOSEN
+    specialFoodSpawnTimer: 3000, //TIMER BEFORE FUNCTION CALL
 
     foods: [
         {
             id: "apple",
             isSpecial: false,
-            locked: false,
+            unlocked: true,
             spawnChance: 100,
             timer: 0,
             position: null,
@@ -41,9 +44,9 @@ export const foodState = {
         {
             id: "carrot",
             isSpecial: true,
-            locked: false,
+            unlocked: false,
             spawnChance: 100,
-            timer: 5000,
+            timer: 4000,
             position: null,
             visible: false,
             timeLeft: 0,
@@ -53,7 +56,7 @@ export const foodState = {
         {
             id: "banana",
             isSpecial: true,
-            locked: false,
+            unlocked: false,
             spawnChance: 25,
             timer: 4000,
             position: null,
@@ -65,7 +68,7 @@ export const foodState = {
         {
             id: "apricot",
             isSpecial: true,
-            locked: true,
+            unlocked: false,
             spawnChance: 15,
             timer: 4000,
             position: null,
@@ -77,7 +80,7 @@ export const foodState = {
         {
             id: "watermelon",
             isSpecial: true,
-            locked: true,
+            unlocked: false,
             spawnChance: 10,
             timer: 3000,
             position: null,
@@ -89,7 +92,7 @@ export const foodState = {
         {
             id: "avocado",
             isSpecial: true,
-            locked: true,
+            unlocked: false,
             spawnChance: 5,
             timer: 3000,
             position: null,

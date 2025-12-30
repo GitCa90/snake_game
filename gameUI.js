@@ -21,6 +21,8 @@ const starTitle = document.getElementById("star-title");
 const starDescription = document.getElementById("star-description");
 
 const perkContainer = document.getElementById("perk-container");
+const perkTitle = document.getElementById("perk-title");
+const individualPerks = document.getElementById("individual-perks");
 const bottomContainer = document.getElementById("bottom-container");
 
 const highscoreContainer = document.getElementById("highscore-container");
@@ -44,14 +46,14 @@ export function updateScore() {
 
 export function startFoodTimer() {
     const food = foodState.currentSpecialFood;
-
+    
     if (!food) {
         specialTimerContainer.style.opacity = 0;
         return;
     }
 
     specialTimerContainer.style.opacity = 1;
-
+console.log("food is: " + food.id);
     countdownIcon.src = foodSprite[food.id].icon.src;
     countdownNumber.textContent = Math.floor(food.timeLeft / 1000)
         .toString()
@@ -153,10 +155,10 @@ export function changeGameModeBackground() {
         };
 
         if (mode === modeState.modeSelected) btn.style.backgroundImage = backgrounds.selected;
-        else if (modeState[mode]) btn.style.backgroundImage = backgrounds.normal;
+        else if (modeState.modes[mode].unlocked) btn.style.backgroundImage = backgrounds.normal;
         else btn.style.backgroundImage = backgrounds.locked;
 
-        if (modeState[mode]) {
+        if (modeState.modes[mode].unlocked) {
             const container = document.createElement("div");
             container.classList.add("game-mode-inner");
 
@@ -215,7 +217,6 @@ export function createStarDescription() {
 }
 
 export function setBackgrounds() {
-    
     bottomContainer.style.backgroundImage = "url(./images/game_perk_background.png)";
 }
 
@@ -261,40 +262,72 @@ export function createHighscore() {
     }
 }
 
-export function isStarUnlocked() {
-    stars[modeState.modeSelected].forEach((star) => {
-        if (!star.unlocked && gameState.score >= star.requiredPoints) {
-            star.unlocked = true;
-        }
-    });
-}
-
 export function updateUI() {
     changeGameModeBackground();
-    
+
     setBackgrounds();
 }
 
 export function createPerks() {
     const overlay = document.getElementById("perk-locked-overlay");
-    if (!stars.normal[1].unlocked) {
+
+    if (!gameState.perksUnlocked) {
         overlay.style.opacity = 1;
+        perkTitle.style.opacity = 0;
         perkContainer.style.backgroundImage = "url(./images/game_perk_background_locked.png)";
-        console.log("lock");
-    } else {
-        overlay.style.opacity = 0;
-        perkContainer.style.backgroundImage = "url(./images/game_perk_background.png)";
-        console.log("unlocked")
-        // const apple = perks.apple;
-
-        // const container = document.createElement("div");
-        // const collected = document.createElement("div");
-        // collected.textContent = `${foodState.foods.apple.totalCollected} / 100`;
-
-        // const reward = document.createElement("div");
-        // reward.textContent = `0% / ${apple[1].reward}% / ${apple[2].reward}% / ${apple[3].reward}% /
-        // ${apple[4].reward}% / ${apple[5].reward}% chance of double points when collecting an apple`;
+        return;
     }
 
-    
+    overlay.style.opacity = 0;
+    perkTitle.style.opacity = 1;
+    perkContainer.style.backgroundImage = "url(./images/game_perk_background.png)";
+    document.querySelectorAll(".perk-item").forEach((item) => item.remove());
+
+    foodState.foods.forEach((food) => {
+        if (!food.unlocked) return;
+
+        const collected = food.totalCollected;
+        const perkFood = perks[food.id];
+
+        if (!perkFood || perkFood.length === 0) return;
+
+        let currentLevel = 0;
+        for (let i = 0; i < perkFood.length; i++) {
+            if (collected >= perkFood[i].collectRequired) currentLevel = i + 1;
+        }
+
+        perkFood.forEach((perk, i) => {
+            perk.unlocked = i + 1 === currentLevel;
+        });
+
+        const targetIndex = Math.min(currentLevel, perkFood.length - 1);
+
+        const container = document.createElement("div");
+        container.classList.add("perk-item");
+
+        const collectDiv = document.createElement("div");
+        collectDiv.classList.add("perk-collectedamount");
+        collectDiv.textContent = `${food.totalCollected} / ${
+            perks[food.id][targetIndex].collectRequired
+        } ${food.id} collected`;
+
+        const rewardDiv = document.createElement("div");
+        rewardDiv.classList.add("perk-reward");
+
+        perkFood.forEach((perk, index) => {
+            const span = document.createElement("span");
+            span.textContent = index === perkFood.length - 1 ? `${perk.reward}% ` : `${perk.reward} / `;
+            
+            span.style.color = perk.unlocked ? "green" : "black";
+            rewardDiv.appendChild(span);
+        });
+
+        rewardDiv.appendChild(
+            document.createTextNode("chance of double points when eating this fruit")
+        );
+
+        container.append(collectDiv, rewardDiv);
+        individualPerks.appendChild(container);
+    });
 }
+

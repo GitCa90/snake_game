@@ -1,4 +1,4 @@
-import { gameState, foodState } from "./gameState.js";
+import { gameState, modeState, foodState } from "./gameState.js";
 import {
     drawSnake,
     clearBoard,
@@ -16,6 +16,7 @@ import {
     startGameMode,
     renderFood,
     getEatPositions,
+    isStarUnlocked,
 } from "./gameLogic.js";
 import { snakeSprite } from "./gameSprites.js"
 
@@ -61,7 +62,7 @@ function gameLoop(timestamp) {
         isGameOver();
 
         createStarDescription();
-
+        
     }
     requestAnimationFrame(gameLoop);
 }
@@ -69,6 +70,8 @@ function gameLoop(timestamp) {
 updateUI();
 createStarDescription();
 createHighscore();
+isStarUnlocked(modeState.modeSelected);
+
 requestAnimationFrame(gameLoop);
 
 document.addEventListener("keydown", setSnakeDirection);

@@ -1,5 +1,6 @@
 import { resetLoop } from "./main.js";
-import { gameState, foodState, modeState } from "./gameState.js";
+import { gameState, modeState, foodState } from "./gameState.js";
+import { stars } from "./achievements.js";
 import {
     gameUI,
     resetGameOverlay,
@@ -11,7 +12,6 @@ import {
     createStarDescription,
     updateUI,
     createPerks,
-    isStarUnlocked,
 } from "./gameUI.js";
 import { snakeSprite } from "./gameSprites.js";
 import { sign, getRandomSpawnTimer, getTilesAvailable, getFreeMapPosition } from "./gameUtil.js";
@@ -201,13 +201,15 @@ export function isGameOver() {
         drawSnake();
         createHighscore();
         createStarDescription();
-        isStarUnlocked();
+        isStarUnlocked(modeState.modeSelected);
         updateUI();
         createPerks();
 
         setTimeout(() => {
             document.addEventListener("keydown", resetGame, { once: true });
         }, 1000);
+
+        console.log(foodState.foods.map((f) => console.log(f.id + f.spawnChance)));
     }
 }
 
@@ -239,7 +241,7 @@ export function resetGame() {
 export function startGameMode(e) {
     const mode = e.currentTarget.dataset.mode;
 
-    if (!modeState[mode] || gameState.isRunning) return;
+    if (!modeState.modes[mode].unlocked || gameState.isRunning) return;
 
     modeState.modeSelected = mode;
     setModeSpeed(mode);
@@ -283,7 +285,7 @@ export function createSpecialFood() {
     const snake = snakeSprite.segment;
     const apple = foodState.foods.find((f) => f.id === "apple");
 
-    const candidates = foodState.foods.filter((f) => f.isSpecial && !f.locked);
+    const candidates = foodState.foods.filter((f) => f.isSpecial && f.unlocked);
 
     for (let i = candidates.length - 1; i >= 0; i--) {
         const food = candidates[i];
@@ -363,3 +365,48 @@ export function renderFood(delta) {
         drawFood(food, delta);
     }
 }
+
+export function isStarUnlocked(mode) {
+    stars[mode].forEach((star) => {
+        if (!star.unlocked && gameState.score >= star.requiredPoints) {
+            star.unlocked = true;
+            setStarEffect(star);
+        }
+    });
+}
+
+function setStarEffect(star) {
+    (star.effect ?? []).forEach((effect) => {
+        const [type, target, value] = effect.split(",");
+
+        switch (type) {
+            case "unlockFood":
+                foodState.foods.find((f) => f.id === target).unlocked = true;
+                break;
+            case "unlockMode":
+                modeState.modes[target].unlocked = true;
+                break;
+            case "unlockPerk":
+                gameState.perksUnlocked = true;
+                break;
+            case "addSpawnTime":
+                foodState.foods.find((f) => target === f.id).timer += Number(value);
+                break;
+            case "spawnChance":
+                increaseSpawnChance(target, Number(value));
+                break;
+        }
+    });
+}
+
+function increaseSpawnChance(food, value) {
+    const order = foodState.foods.map(f =>  f.id)
+    const position = order.indexOf(food)
+
+    for (let i = position; i >= 0; i--) {
+        const food = foodState.foods[i]
+        food.spawnChance += value
+        if (food.spawnChance > 100) food.spawnChance = 100
+    }
+}
+increaseSpawnChance()

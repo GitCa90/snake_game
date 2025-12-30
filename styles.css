@@ -9,6 +9,7 @@
     --layout-width: 1450px;
     --canvas-width: 800px;
     --normalTextSize: 15px;
+    --bigTextSize: 25px;
 }
 
 body {
@@ -166,9 +167,19 @@ body {
     height: 100%;
 }
 
+#perk-title {
+    display: flex;
+    justify-content: center;
+    font-size: var(--bigTextSize);
+    margin-top: 30px;
+    margin-bottom: 10px;
+    opacity: 1;
+}
+
 .perk-item {
     margin-left: 20px;
-    margin-top: 20px;
+    margin-top: 30px;
+    margin-bottom: 20px;
 }
 
 .perk-collectedamount {
@@ -196,7 +207,7 @@ body {
     justify-content: center;
     border-right: solid 1px black;
     width: 50%;
-    font-size: 25px;
+    font-size: var(--bigTextSize);
 }
 
 #star-description {
@@ -233,7 +244,7 @@ body {
     align-items: center;
     justify-content: center;
     width: 50%;
-    font-size: 25px;
+    font-size: var(--bigTextSize); 
 }
 
 .score-row-header {
