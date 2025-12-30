@@ -1,11 +1,13 @@
 import { resetLoop } from "./main.js";
 import { gameState, modeState, foodState } from "./gameState.js";
-import { stars } from "./achievements.js";
+import { stars, perks } from "./achievements.js";
 import {
     gameUI,
     resetGameOverlay,
     changeGameModeBackground,
     drawFood,
+    startDoubleReward,
+    drawDoubleReward,
     addDeathScreen,
     drawSnake,
     createHighscore,
@@ -47,9 +49,7 @@ export function moveSnake() {
 
     const seg = snakeSprite.segment;
     const tail = seg[seg.length - 1];
-
-    const dX = gameState.direction.x;
-    const dY = gameState.direction.y;
+    const head = seg[0]
 
     gameState.lastTailPosition = { x: tail.x, y: tail.y };
 
@@ -58,9 +58,20 @@ export function moveSnake() {
         seg[i].y = seg[i - 1].y;
     }
 
-    seg[0].x += dX * gameState.unitSize;
-    seg[0].y += dY * gameState.unitSize;
+    head.x += gameState.direction.x * gameState.unitSize;
+    head.y += gameState.direction.y * gameState.unitSize;
+
+    
+   
+    if (!gameState.wallCollision) {
+        if (head.x < 0) head.x = gameUI.canvasWidth - gameState.unitSize;
+        else if (head.x >= gameUI.canvasWidth) head.x = 0;
+
+        if (head.y < 0) seg[0].y = gameUI.canvasHeight - gameState.unitSize;
+        else if (head.y >= gameUI.canvasHeight) seg[0].y = 0;
+    }
 }
+
 
 export function getEatPositions() {
     if (foodState.eatenFoodPositions.length === 0) return;
@@ -82,6 +93,20 @@ export function getSnakeHead(dX, dY) {
     return head[`${dX},${dY}`] || snakeSprite.head.right;
 }
 
+function getBorderDirection(prev, current, boardWidth, boardHeight) {
+    let dx = current.x - prev.x;
+    let dy = current.y - prev.y;
+
+    if (dx > boardWidth / 2) dx -= boardWidth;
+    if (dx < -boardWidth / 2) dx += boardWidth;
+
+    if (dy > boardHeight / 2) dy -= boardHeight;
+    if (dy < -boardHeight / 2) dy += boardHeight;
+
+    return { x: sign(dx), y: sign(dy) };
+}
+
+
 export function getSnakeTail(arr, i) {
     const segment = arr[i];
     const prev = arr[i - 1];
@@ -92,9 +117,8 @@ export function getSnakeTail(arr, i) {
 
     if (!prev) return snakeSprite.tail.right;
 
-    const dX = sign(segment.x - prev.x); //0 == 0 || 25 = 1 || -25 = -1 (sign)
-    const dY = sign(segment.y - prev.y);
-
+    const dir = getBorderDirection(prev, segment, gameUI.canvasWidth, gameUI.canvasHeight);
+    
     const tail = {
         "1,0": snakeSprite.tail.right,
         "-1,0": snakeSprite.tail.left,
@@ -110,7 +134,7 @@ export function getSnakeTail(arr, i) {
     };
 
     const map = isFilled ? tailFilled : tail;
-    return map[`${dX},${dY}`] || snakeSprite.tail.right;
+    return map[`${dir.x},${dir.y}`] || snakeSprite.tail.right;
 }
 
 export function getSnakeBody(arr, i) {
@@ -118,10 +142,9 @@ export function getSnakeBody(arr, i) {
     let prev = arr[i - 1];
     let next = arr[i + 1];
 
-    const prevX = sign(segment.x - prev.x); //0 == 0 || 25 = 1 || -25 = -1 (sign)
-    const prevY = sign(segment.y - prev.y);
-    const nextX = sign(next.x - segment.x);
-    const nextY = sign(next.y - segment.y);
+    const dirPrev = getBorderDirection(prev, segment, gameUI.canvasWidth, gameUI.canvasHeight);
+    const dirNext = getBorderDirection(segment, next, gameUI.canvasWidth, gameUI.canvasHeight);
+
 
     const isFilled = foodState.eatenFoodPositions.some(
         (f) => f.x === segment.x && f.y === segment.y
@@ -163,7 +186,7 @@ export function getSnakeBody(arr, i) {
         "0,1,-1,0": snakeSprite.corner.topLeftFill,
     };
 
-    const map = `${prevX},${prevY},${nextX},${nextY}`;
+    const map = `${dirPrev.x},${dirPrev.y},${dirNext.x},${dirNext.y}`;
 
     return (
         (isFilled ? straightFilled[map] : straight[map]) ||
@@ -181,11 +204,12 @@ export function isWallCollision() {
             snakeHead.x > gameUI.canvasWidth - gameState.unitSize ||
             snakeHead.y > gameUI.canvasHeight - gameState.unitSize
         );
-    } else {
-        //REMOVE WALL COLLISION LATER?
-        return false;
     }
 }
+
+
+
+
 
 export function isSnakeCollision() {
     const head = snakeSprite.segment[0];
@@ -208,8 +232,6 @@ export function isGameOver() {
         setTimeout(() => {
             document.addEventListener("keydown", resetGame, { once: true });
         }, 1000);
-
-        console.log(foodState.foods.map((f) => console.log(f.id + f.spawnChance)));
     }
 }
 
@@ -339,7 +361,7 @@ function onFoodHit() {
     if (food.isSpecial) {
         food.visible = false;
         foodState.currentSpecialFood = null;
-        foodState.specialFoodSpawnTimer = getRandomSpawnTimer(); //RESETTING SINCE EAT
+        foodState.specialFoodSpawnTimer = getRandomSpawnTimer();
     } else {
         food.position = null;
     }
@@ -354,6 +376,16 @@ function onFoodEat(food, position) {
 
     snakeSprite.segment.push({ x: tail.x, y: tail.y });
     foodState.eatenFoodPositions.push({ x: position.x, y: position.y });
+
+    const roll = Math.floor(Math.random() * 15) + 1;
+    const findPerk = perks[food.id].find((f) => f.unlocked);
+
+    if (!findPerk) return;
+    if (findPerk.reward >= roll) {
+        gameState.score += points;
+        startDoubleReward();
+        drawDoubleReward();
+    }
 }
 
 export function renderFood(delta) {
@@ -400,13 +432,12 @@ function setStarEffect(star) {
 }
 
 function increaseSpawnChance(food, value) {
-    const order = foodState.foods.map(f =>  f.id)
-    const position = order.indexOf(food)
+    const order = foodState.foods.map((f) => f.id);
+    const position = order.indexOf(food);
 
     for (let i = position; i >= 0; i--) {
-        const food = foodState.foods[i]
-        food.spawnChance += value
-        if (food.spawnChance > 100) food.spawnChance = 100
+        const food = foodState.foods[i];
+        food.spawnChance += value;
+        if (food.spawnChance > 100) food.spawnChance = 100;
     }
 }
-increaseSpawnChance()

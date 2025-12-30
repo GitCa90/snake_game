@@ -1,5 +1,5 @@
 import { gameState, modeState, foodState } from "./gameState.js";
-import { snakeSprite, foodSprite } from "./gameSprites.js";
+import { snakeSprite, foodSprite, otherSprite } from "./gameSprites.js";
 import { getSnakeHead, getSnakeTail, getSnakeBody } from "./gameLogic.js";
 import { getCurrentTime } from "./gameUtil.js";
 import { stars, perks } from "./achievements.js";
@@ -46,14 +46,13 @@ export function updateScore() {
 
 export function startFoodTimer() {
     const food = foodState.currentSpecialFood;
-    
+
     if (!food) {
         specialTimerContainer.style.opacity = 0;
         return;
     }
 
     specialTimerContainer.style.opacity = 1;
-console.log("food is: " + food.id);
     countdownIcon.src = foodSprite[food.id].icon.src;
     countdownNumber.textContent = Math.floor(food.timeLeft / 1000)
         .toString()
@@ -68,6 +67,8 @@ export function drawSnake() {
         else if (index === snakeSprite.segment.length - 1)
             sprite = getSnakeTail(snakeSprite.segment, index);
         else sprite = getSnakeBody(snakeSprite.segment, index);
+
+        if (!sprite) return
 
         gameUI.ctx.drawImage(
             snakeSprite.sprite,
@@ -115,6 +116,29 @@ export function drawFood(food, delta) {
         gameState.unitSize,
         gameState.unitSize
     );
+}
+
+export function startDoubleReward() {
+    foodState.doubleRewardTimeLeft = 600;
+}
+
+export function drawDoubleReward(delta) {
+    if (!Number.isFinite(delta)) return;
+    if (foodState.doubleRewardTimeLeft <= 0) return;
+
+    foodState.doubleRewardTimeLeft -= delta;
+
+    let posX;
+    let posY;
+    const sprite = otherSprite.double.sprite;
+    const lastEat = foodState.eatenFoodPositions[foodState.eatenFoodPositions.length - 1];
+
+    if (lastEat) {
+        posX = lastEat.x;
+        posY = lastEat.y;
+    }
+
+    gameUI.ctx.drawImage(sprite, 0, 0, sprite.width, sprite.height, posX, posY, 50, 50);
 }
 
 export function addDeathScreen() {
@@ -316,8 +340,9 @@ export function createPerks() {
 
         perkFood.forEach((perk, index) => {
             const span = document.createElement("span");
-            span.textContent = index === perkFood.length - 1 ? `${perk.reward}% ` : `${perk.reward} / `;
-            
+            span.textContent =
+                index === perkFood.length - 1 ? `${perk.reward}% ` : `${perk.reward} / `;
+
             span.style.color = perk.unlocked ? "green" : "black";
             rewardDiv.appendChild(span);
         });
@@ -330,4 +355,3 @@ export function createPerks() {
         individualPerks.appendChild(container);
     });
 }
-

@@ -102,4 +102,83 @@ export const foodSprite = {
             accumulator: 0,
         },
     },
+    apricot: {
+        sprite: (() => {
+            const img = new Image();
+            img.src = "./images/apricot-icon.png";
+            return img;
+        })(),
+        icon: (() => {
+            const img = new Image();
+            img.src = "./images/apricot-icon.png";
+            return img;
+        })(),
+        frames: [{ x: 0, y: 0 }],
+        frameSize: 25,
+        animation: {
+            frame: 0,
+            fps: 0,
+            accumulator: 0,
+        },
+    },
+    watermelon: {
+        sprite: (() => {
+            const img = new Image();
+            img.src = "./images/watermelon-icon.png";
+            return img;
+        })(),
+        icon: (() => {
+            const img = new Image();
+            img.src = "./images/watermelon-icon.png";
+            return img;
+        })(),
+        frames: [{ x: 0, y: 0 }],
+        frameSize: 25,
+        animation: {
+            frame: 0,
+            fps: 0,
+            accumulator: 0,
+        },
+    },
+    avocado: {
+        sprite: (() => {
+            const img = new Image();
+            img.src = "./images/avocado-icon.png";
+            return img;
+        })(),
+        icon: (() => {
+            const img = new Image();
+            img.src = "./images/avocado-icon.png";
+            return img;
+        })(),
+        frames: [{ x: 0, y: 0 }],
+        frameSize: 25,
+        animation: {
+            frame: 0,
+            fps: 0,
+            accumulator: 0,
+        },
+    },
+};
+
+export const otherSprite = {
+    double: {
+        sprite: (() => {
+            const img = new Image();
+            img.src = "./images/double-icon.png";
+            return img;
+        })(),
+        icon: (() => {
+            const img = new Image();
+            img.src = "./images/double-icon.png";
+            return img;
+        })(),
+        frames: [{ x: 0, y: 0 }],
+        frameSize: 25,
+        animation: {
+            frame: 0,
+            fps: 0,
+            accumulator: 0,
+        },
+    },
 };

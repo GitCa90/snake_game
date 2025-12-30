@@ -4,6 +4,7 @@ import {
     clearBoard,
     updateScore,
     startFoodTimer,
+    drawDoubleReward,
     updateUI,
     createStarDescription,
     createHighscore,
@@ -54,23 +55,28 @@ function gameLoop(timestamp) {
         clearBoard();
         moveSnake();
         drawSnake();
-        renderFood(fixedDelta);
+        renderFood(step);
+     
         getEatPositions();
         updateScore();
         startFoodTimer();
         createPerks();
         isGameOver();
-
+       
         createStarDescription();
-        
     }
+    
+    
+    drawDoubleReward(delta);
     requestAnimationFrame(gameLoop);
+    
 }
 
 updateUI();
 createStarDescription();
 createHighscore();
 isStarUnlocked(modeState.modeSelected);
+
 
 requestAnimationFrame(gameLoop);
 

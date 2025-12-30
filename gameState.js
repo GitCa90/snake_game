@@ -27,6 +27,7 @@ export const foodState = {
     eatenFoodPositions: [],
     currentSpecialFood: null, //WHAT FOOD IS CHOSEN
     specialFoodSpawnTimer: 3000, //TIMER BEFORE FUNCTION CALL
+    doubleRewardTimeLeft: 0,
 
     foods: [
         {
