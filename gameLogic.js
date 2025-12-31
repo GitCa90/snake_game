@@ -16,7 +16,14 @@ import {
     createPerks,
 } from "./gameUI.js";
 import { snakeSprite } from "./gameSprites.js";
-import { sign, getRandomSpawnTimer, getTilesAvailable, getFreeMapPosition } from "./gameUtil.js";
+import {
+    sign,
+    getRandomSpawnTimer,
+    getTilesAvailable,
+    getFreeMapPosition,
+    encodeBase64,
+    decodeBase64,
+} from "./gameUtil.js";
 
 export function setSnakeDirection(event) {
     const up = { x: 0, y: -1 };
@@ -49,7 +56,7 @@ export function moveSnake() {
 
     const seg = snakeSprite.segment;
     const tail = seg[seg.length - 1];
-    const head = seg[0]
+    const head = seg[0];
 
     gameState.lastTailPosition = { x: tail.x, y: tail.y };
 
@@ -61,8 +68,6 @@ export function moveSnake() {
     head.x += gameState.direction.x * gameState.unitSize;
     head.y += gameState.direction.y * gameState.unitSize;
 
-    
-   
     if (!gameState.wallCollision) {
         if (head.x < 0) head.x = gameUI.canvasWidth - gameState.unitSize;
         else if (head.x >= gameUI.canvasWidth) head.x = 0;
@@ -71,7 +76,6 @@ export function moveSnake() {
         else if (head.y >= gameUI.canvasHeight) seg[0].y = 0;
     }
 }
-
 
 export function getEatPositions() {
     if (foodState.eatenFoodPositions.length === 0) return;
@@ -93,7 +97,7 @@ export function getSnakeHead(dX, dY) {
     return head[`${dX},${dY}`] || snakeSprite.head.right;
 }
 
-function getBorderDirection(prev, current, boardWidth, boardHeight) {
+function getSnakeDirections(prev, current, boardWidth, boardHeight) {
     let dx = current.x - prev.x;
     let dy = current.y - prev.y;
 
@@ -106,7 +110,6 @@ function getBorderDirection(prev, current, boardWidth, boardHeight) {
     return { x: sign(dx), y: sign(dy) };
 }
 
-
 export function getSnakeTail(arr, i) {
     const segment = arr[i];
     const prev = arr[i - 1];
@@ -117,8 +120,8 @@ export function getSnakeTail(arr, i) {
 
     if (!prev) return snakeSprite.tail.right;
 
-    const dir = getBorderDirection(prev, segment, gameUI.canvasWidth, gameUI.canvasHeight);
-    
+    const dir = getSnakeDirections(prev, segment, gameUI.canvasWidth, gameUI.canvasHeight);
+
     const tail = {
         "1,0": snakeSprite.tail.right,
         "-1,0": snakeSprite.tail.left,
@@ -142,9 +145,8 @@ export function getSnakeBody(arr, i) {
     let prev = arr[i - 1];
     let next = arr[i + 1];
 
-    const dirPrev = getBorderDirection(prev, segment, gameUI.canvasWidth, gameUI.canvasHeight);
-    const dirNext = getBorderDirection(segment, next, gameUI.canvasWidth, gameUI.canvasHeight);
-
+    const dirPrev = getSnakeDirections(prev, segment, gameUI.canvasWidth, gameUI.canvasHeight);
+    const dirNext = getSnakeDirections(segment, next, gameUI.canvasWidth, gameUI.canvasHeight);
 
     const isFilled = foodState.eatenFoodPositions.some(
         (f) => f.x === segment.x && f.y === segment.y
@@ -207,10 +209,6 @@ export function isWallCollision() {
     }
 }
 
-
-
-
-
 export function isSnakeCollision() {
     const head = snakeSprite.segment[0];
 
@@ -224,10 +222,10 @@ export function isGameOver() {
         addDeathScreen();
         drawSnake();
         createHighscore();
-        createStarDescription();
-        isStarUnlocked(modeState.modeSelected);
+        
+        
         updateUI();
-        createPerks();
+        
 
         setTimeout(() => {
             document.addEventListener("keydown", resetGame, { once: true });
@@ -377,7 +375,7 @@ function onFoodEat(food, position) {
     snakeSprite.segment.push({ x: tail.x, y: tail.y });
     foodState.eatenFoodPositions.push({ x: position.x, y: position.y });
 
-    const roll = Math.floor(Math.random() * 15) + 1;
+    const roll = Math.floor(Math.random() * 100) + 1;
     const findPerk = perks[food.id].find((f) => f.unlocked);
 
     if (!findPerk) return;
@@ -439,5 +437,95 @@ function increaseSpawnChance(food, value) {
         const food = foodState.foods[i];
         food.spawnChance += value;
         if (food.spawnChance > 100) food.spawnChance = 100;
+    }
+}
+
+export function saveGame() {
+    const saveState = {
+        gameState: {
+            wallCollision: gameState.wallCollision,
+            perksUnlocked: gameState.perksUnlocked,
+        },
+        modeState,
+        foodState: {
+            foods: foodState.foods.map((f) => ({
+                id: f.id,
+                unlocked: f.unlocked,
+                spawnChance: f.spawnChance,
+                totalCollected: f.totalCollected,
+            })),
+        },
+        stars: (() => {
+            const save = {};
+            for (const mode in stars) {
+                save[mode] = stars[mode].map((star) => ({ unlocked: star.unlocked }));
+            }
+            return save;
+        })(),
+        perks: (() => {
+            const save = {}
+            for (const mode in perks) {
+                save[mode] = perks[mode].map((perk) => ({unlocked: perk.unlocked}))
+            }
+            return save
+        })(),
+        savedAt: Date.now(),
+        version: 1,
+    };
+
+    const encoded = encodeBase64(saveState);
+    localStorage.setItem("snakeSave", encoded);
+}
+
+export function loadGame() {
+    const encoded = localStorage.getItem("snakeSave");
+    if (!encoded) return false;
+
+    const saveState = decodeBase64(encoded);
+
+    // Restore gameState
+    if (saveState.gameState) {
+        gameState.wallCollision = saveState.gameState.wallCollision ?? gameState.wallCollision;
+        gameState.perksUnlocked = saveState.gameState.perksUnlocked ?? gameState.perksUnlocked;
+    }
+
+    // Restore modes
+    if (saveState.modeState) {
+        modeState.modeSelected = saveState.modeState.modeSelected ?? modeState.modeSelected
+        for (const mode in saveState.modeState.modes) {
+            if (modeState.modes[mode]) {
+                modeState.modes[mode].unlocked = saveState.modeState.modes[mode].unlocked
+            }
+        }
+    }
+  
+    // Restore foods
+    for (const f of saveState.foodState.foods ?? []) {
+        const target = foodState.foods.find((food) => food.id === f.id);
+        if (target) {
+            target.unlocked = f.unlocked;
+            target.spawnChance = f.spawnChance
+            target.totalCollected = f.totalCollected;
+        }
+    }
+
+    // Restore stars
+   for (const mode in saveState.stars) {
+       if (!stars[mode]) continue;
+       saveState.stars[mode].forEach((savedStar, i) => {
+           if (stars[mode][i]) {
+               stars[mode][i].unlocked = savedStar.unlocked;
+           }
+       });
+   }
+
+    // Restore perks
+    for (const food in saveState.perks) {
+        if (!perks[food]) continue
+        saveState.perks[food].forEach((savedPerk, i) => {
+            if (perks[food][i]) {
+                perks[food][i].unlocked = savedPerk.unlocked;
+            }
+        })
     }
 }

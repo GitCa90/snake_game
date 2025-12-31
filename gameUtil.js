@@ -27,16 +27,16 @@ function getRandomMapPosition() {
 }
 
 export function getRandomSpawnTimer() {
-    // 1 sec + 0-2 sec
-    return Math.floor(1000 + Math.random() * 2000);
+    // 10 sec + 0-10 sec = 10-20 second
+    return Math.floor(10000 + Math.random() * 10000);
 }
 
 export function getTilesAvailable() {
     const width = gameUI.canvasWidth;
-    const height = gameUI.canvasHeight
-    const snake = snakeSprite.segment.length
+    const height = gameUI.canvasHeight;
+    const snake = snakeSprite.segment.length;
 
-    const tilesLeft = (width / 25) * (height / 25) - snake
+    const tilesLeft = (width / 25) * (height / 25) - snake;
     return tilesLeft;
 }
 
@@ -61,4 +61,26 @@ export function getFreeMapPosition({ snake, apple = null, specialFood = null }) 
                 position.y === specialFood.position.y)
         )
        return position
+}
+
+export function encodeBase64(obj) {
+    const jsonFile = JSON.stringify(obj);
+    const bytes = new TextEncoder().encode(jsonFile);
+    let binary = "";
+
+    bytes.forEach((b) => (binary += String.fromCharCode(b)));
+
+    return btoa(binary);
+}
+
+export function decodeBase64(str) {
+    const binary = atob(str);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+
+    const jsonFile = new TextDecoder().decode(bytes);
+    return JSON.parse(jsonFile);
 }

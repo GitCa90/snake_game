@@ -68,7 +68,7 @@ export function drawSnake() {
             sprite = getSnakeTail(snakeSprite.segment, index);
         else sprite = getSnakeBody(snakeSprite.segment, index);
 
-        if (!sprite) return
+        if (!sprite) return;
 
         gameUI.ctx.drawImage(
             snakeSprite.sprite,
@@ -324,16 +324,23 @@ export function createPerks() {
             perk.unlocked = i + 1 === currentLevel;
         });
 
-        const targetIndex = Math.min(currentLevel, perkFood.length - 1);
-
         const container = document.createElement("div");
         container.classList.add("perk-item");
 
         const collectDiv = document.createElement("div");
         collectDiv.classList.add("perk-collectedamount");
-        collectDiv.textContent = `${food.totalCollected} / ${
-            perks[food.id][targetIndex].collectRequired
-        } ${food.id} collected`;
+
+        const last = perkFood.find((f) => f.level === 5);
+        const maxed = food.totalCollected > last.collectRequired;
+        const targetIndex = Math.min(currentLevel, perkFood.length - 1);
+
+        const span = document.createElement("span");
+        span.textContent = maxed
+            ? `${food.totalCollected} `
+            : `${food.totalCollected} / ${perks[food.id][targetIndex].collectRequired} `;
+
+        collectDiv.appendChild(span);
+        collectDiv.appendChild(document.createTextNode(`${food.id}s collected`));
 
         const rewardDiv = document.createElement("div");
         rewardDiv.classList.add("perk-reward");
