@@ -1,4 +1,4 @@
-import { gameState, modeState, foodState } from "./gameState.js";
+import { gameState, modeState } from "./gameState.js";
 import {
     drawSnake,
     clearBoard,
@@ -22,7 +22,7 @@ import {
     loadGame,
     saveGame,
 } from "./gameLogic.js";
-import { snakeSprite } from "./gameSprites.js";
+
 
 loadGame();
 updateUI();
@@ -67,6 +67,7 @@ function gameLoop(timestamp) {
         isStarUnlocked(modeState.modeSelected);
         createStarDescription();
         changeGameModeBackground();
+    
     }
     saveGame();
     drawDoubleReward(delta);
@@ -80,29 +81,3 @@ document
     .querySelectorAll(".game-mode")
     .forEach((btn) => btn.addEventListener("click", startGameMode));
 
-
-
-
-
-
-// function cheat() {
-//     const up = { x: 0, y: -1 };
-//     const left = { x: -1, y: 0 };
-//     const right = { x: 1, y: 0 };
-//     const down = { x: 0, y: 1 };
-//     const snakeHead = snakeSprite.segment[0]; 
-
-//     if (snakeHead["x"] === 775 && snakeHead["y"] === 0) {
-//         gameState.nextDirection = down;
-//     } else if (snakeHead["x"] === 775 && snakeHead["y"] === 575) {
-//         gameState.nextDirection = left;
-//     } else if (snakeHead["x"] === 0 && snakeHead["y"] % 2 === 1) {
-//         gameState.nextDirection = up;
-//     } else if (snakeHead["x"] === 0 && snakeHead["y"] % 2 === 0) {
-//         gameState.nextDirection = right;
-//     } else if (snakeHead["x"] === 750 && snakeHead["y"] !== 0 && snakeHead["y"] % 2 === 0) {
-//         gameState.nextDirection = up;
-//     } else if (snakeHead["x"] === 750 && snakeHead["y"] % 2 === 1) {
-//         gameState.nextDirection = left;
-//     }
-// }

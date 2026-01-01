@@ -64,7 +64,7 @@ export const foodState = {
             visible: false,
             timeLeft: 0,
             totalCollected: 0,
-            points: { normal: 9, hard: 18, expert: 27, master: 36, inferno: 45 },
+            points: { normal: 8, hard: 16, expert: 32, master: 48, inferno: 64 },
         },
         {
             id: "apricot",
@@ -76,7 +76,7 @@ export const foodState = {
             visible: false,
             timeLeft: 0,
             totalCollected: 0,
-            points: { normal: 18, hard: 36, expert: 54, master: 62, inferno: 90 },
+            points: { normal: 15, hard: 30, expert: 45, master: 60, inferno: 75 },
         },
         {
             id: "watermelon",
@@ -88,7 +88,7 @@ export const foodState = {
             visible: false,
             timeLeft: 0,
             totalCollected: 0,
-            points: { normal: 20, hard: 40, expert: 60, master: 80, inferno: 100 },
+            points: { normal: 22, hard: 44, expert: 66, master: 88, inferno: 110 },
         },
         {
             id: "avocado",
@@ -100,7 +100,7 @@ export const foodState = {
             visible: false,
             timeLeft: 0,
             totalCollected: 0,
-            points: { normal: 18, hard: 36, expert: 54, master: 62, inferno: 90 },
+            points: { normal: 30, hard: 60, expert: 90, master: 120, inferno: 150 },
         },
     ],
 };

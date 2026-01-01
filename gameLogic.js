@@ -225,7 +225,7 @@ export function isGameOver() {
         
         
         updateUI();
-        
+        getSpawnChance();
 
         setTimeout(() => {
             document.addEventListener("keydown", resetGame, { once: true });
@@ -273,9 +273,9 @@ export function setModeSpeed(mode) {
     const speed = {
         normal: 1000 / 10,
         hard: 1000 / 15,
-        expert: 1000 / 22,
-        master: 1000 / 30,
-        inferno: 1000 / 40,
+        expert: 1000 / 20,
+        master: 1000 / 25,
+        inferno: 1000 / 35,
     };
     gameState.gameSpeed = speed[mode];
 }
@@ -425,6 +425,8 @@ function setStarEffect(star) {
             case "spawnChance":
                 increaseSpawnChance(target, Number(value));
                 break;
+            case "wallCollision":
+                gameState.wallCollision = false;
         }
     });
 }
@@ -445,6 +447,7 @@ export function saveGame() {
         gameState: {
             wallCollision: gameState.wallCollision,
             perksUnlocked: gameState.perksUnlocked,
+            gameSpeed: gameState.gameSpeed
         },
         modeState,
         foodState: {
@@ -487,6 +490,7 @@ export function loadGame() {
     if (saveState.gameState) {
         gameState.wallCollision = saveState.gameState.wallCollision ?? gameState.wallCollision;
         gameState.perksUnlocked = saveState.gameState.perksUnlocked ?? gameState.perksUnlocked;
+        gameState.gameSpeed = saveState.gameState.gameSpeed ?? gameState.gameSpeed;
     }
 
     // Restore modes
@@ -528,4 +532,10 @@ export function loadGame() {
             }
         })
     }
+}
+
+function getSpawnChance() {
+    const food = foodState.foods.forEach((food)=> {
+        console.log(`${food.id}: ${food.spawnChance}`)
+    })
 }

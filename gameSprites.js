@@ -64,7 +64,7 @@ export const foodSprite = {
     carrot: {
         sprite: (() => {
             const img = new Image();
-            img.src = "./images/carrot-sprite-anim.png";
+            img.src = "./images/carrot-sprite.png";
             return img;
         })(),
         icon: (() => {
@@ -79,14 +79,14 @@ export const foodSprite = {
         frameSize: 25,
         animation: {
             frame: 0,
-            fps: 10,
+            fps: 2,
             accumulator: 0,
         },
     },
     banana: {
         sprite: (() => {
             const img = new Image();
-            img.src = "./images/banana-icon.png";
+            img.src = "./images/banana-sprite.png";
             return img;
         })(),
         icon: (() => {
@@ -94,18 +94,21 @@ export const foodSprite = {
             img.src = "./images/banana-icon.png";
             return img;
         })(),
-        frames: [{ x: 0, y: 0 }],
+        frames: [
+            { x: 0, y: 0 },
+            { x: 25, y: 0 },
+        ],
         frameSize: 25,
         animation: {
             frame: 0,
-            fps: 0,
+            fps: 2,
             accumulator: 0,
         },
     },
     apricot: {
         sprite: (() => {
             const img = new Image();
-            img.src = "./images/apricot-icon.png";
+            img.src = "./images/apricot-sprite.png";
             return img;
         })(),
         icon: (() => {
@@ -113,18 +116,21 @@ export const foodSprite = {
             img.src = "./images/apricot-icon.png";
             return img;
         })(),
-        frames: [{ x: 0, y: 0 }],
+        frames: [
+            { x: 0, y: 0 },
+            { x: 25, y: 0 },
+        ],
         frameSize: 25,
         animation: {
             frame: 0,
-            fps: 0,
+            fps: 2,
             accumulator: 0,
         },
     },
     watermelon: {
         sprite: (() => {
             const img = new Image();
-            img.src = "./images/watermelon-icon.png";
+            img.src = "./images/watermelon-sprite.png";
             return img;
         })(),
         icon: (() => {
@@ -132,18 +138,21 @@ export const foodSprite = {
             img.src = "./images/watermelon-icon.png";
             return img;
         })(),
-        frames: [{ x: 0, y: 0 }],
+        frames: [
+            { x: 0, y: 0 },
+            { x: 25, y: 0 },
+        ],
         frameSize: 25,
         animation: {
             frame: 0,
-            fps: 0,
+            fps: 2,
             accumulator: 0,
         },
     },
     avocado: {
         sprite: (() => {
             const img = new Image();
-            img.src = "./images/avocado-icon.png";
+            img.src = "./images/avocado-sprite.png";
             return img;
         })(),
         icon: (() => {
@@ -151,11 +160,14 @@ export const foodSprite = {
             img.src = "./images/avocado-icon.png";
             return img;
         })(),
-        frames: [{ x: 0, y: 0 }],
+        frames: [
+            { x: 0, y: 0 },
+            { x: 25, y: 0 },
+        ],
         frameSize: 25,
         animation: {
             frame: 0,
-            fps: 0,
+            fps: 2,
             accumulator: 0,
         },
     },

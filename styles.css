@@ -41,6 +41,14 @@ body {
     padding: 20px 0px 20px 0px;
 }
 
+#snake-logo {
+    position: absolute;
+    top: -20px;
+    right: -50px;
+    transform: rotate(30deg);
+    z-index: 50;
+}
+
 /* =====TOP SCOREBOARD===== */
 #playerboard {
     position: absolute;
